@@ -15,6 +15,7 @@ export class AuthController {
 
   @Post('login')
   async login(@Body(new ValidationPipe()) loginDto: LoginDto) {
+    console.log('Dados recebidos no backend:', loginDto);
     const user = await this.authService.validateUser(loginDto.cpf, loginDto.password);
     return { message: 'Login realizado com sucesso', access_token: user.access_token };
   }
