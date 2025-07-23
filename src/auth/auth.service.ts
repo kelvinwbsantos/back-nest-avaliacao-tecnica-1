@@ -3,12 +3,14 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private jwtService: JwtService,
   ) { }
 
   async register(cpf: string, password: string): Promise<User> {
@@ -28,7 +30,7 @@ export class AuthService {
     return this.usersRepository.save(user);
   }
 
-  async validateUser(cpf: string, password: string): Promise<User> {
+  async validateUser(cpf: string, password: string): Promise<{ access_token: string }> {
 
     const user = await this.usersRepository.findOne({ where: { cpf } });
     if (!user) {
@@ -40,6 +42,9 @@ export class AuthService {
       throw new UnauthorizedException('CPF ou senha inválidos');
     }
 
-    return user;
+    const payload = { sub: user.id, cpf: user.cpf };
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
   }
 }

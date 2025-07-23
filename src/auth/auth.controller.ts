@@ -1,6 +1,7 @@
 import { Controller, Post, Body, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { access } from 'fs';
 
 @Controller('auth')
 export class AuthController {
@@ -15,6 +16,6 @@ export class AuthController {
   @Post('login')
   async login(@Body(new ValidationPipe()) loginDto: LoginDto) {
     const user = await this.authService.validateUser(loginDto.cpf, loginDto.password);
-    return { message: 'Login realizado com sucesso', cpf: user.cpf };
+    return { message: 'Login realizado com sucesso', access_token: user.access_token };
   }
 }
