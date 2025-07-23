@@ -1,7 +1,10 @@
-import { IsString, MinLength, Matches } from 'class-validator';
+import { IsString, MinLength, Matches, MaxLength } from 'class-validator';
 
 export class RegisterDto {
   @IsString()
+  @Matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, {
+    message: 'CPF deve estar no formato 000.000.000-00',
+  })
   cpf!: string;
 
   @IsString()
@@ -15,6 +18,9 @@ export class RegisterDto {
 
 export class LoginDto {
   @IsString()
+  @Matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, {
+    message: 'CPF deve estar no formato 000.000.000-00',
+  })
   cpf!: string;
 
   @IsString()
