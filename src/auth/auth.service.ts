@@ -2,8 +2,8 @@ import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +22,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // TODO: separar lógica de criação de usuário em um módulo próprio!
     const user = this.usersRepository.create({
       cpf,
       password: hashedPassword,
