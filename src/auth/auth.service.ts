@@ -1,39 +1,25 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/users/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-    private jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
   ) { }
 
+
   async register(cpf: string, password: string): Promise<User> {
-
-    const exists = await this.usersRepository.findOne({ where: { cpf } });
-    if (exists) {
-      throw new BadRequestException('Usuário com este CPF já existe.');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // TODO: separar lógica de criação de usuário em um módulo próprio!
-    const user = this.usersRepository.create({
-      cpf,
-      password: hashedPassword,
-    });
-
-    return this.usersRepository.save(user);
+    const createUserDto = { cpf, password };
+    return this.usersService.create(createUserDto);
   }
 
   async validateUser(cpf: string, password: string): Promise<{ access_token: string }> {
 
-    const user = await this.usersRepository.findOne({ where: { cpf } });
+    const user = await this.usersService.findByCpf(cpf);
     if (!user) {
       throw new UnauthorizedException('CPF ou senha inválidos');
     }
@@ -43,7 +29,7 @@ export class AuthService {
       throw new UnauthorizedException('CPF ou senha inválidos');
     }
 
-    const payload = { sub: user.id, cpf: user.cpf };
+    const payload = { sub: user.id, cpf: user.cpf, role: user.role.name };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
