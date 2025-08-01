@@ -5,8 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RolesModule } from './roles/roles.module';
-import { UsersService } from './users/users.service';
 import { UsersModule } from './users/users.module';
+import { InvitesModule } from './invites/invites.module';
+import { MailerService } from './mailer/mailer.service';
+import { MailerModule } from './mailer/mailer.module';
+import { GlobalJwtModule } from './shared/global-jwt.module';
 
 @Module({
   imports: [
@@ -28,8 +31,11 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     RolesModule,
     UsersModule,
+    InvitesModule,
+    MailerModule,
+    GlobalJwtModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MailerService],
 })
 export class AppModule {}
