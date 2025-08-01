@@ -6,11 +6,36 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Column({ length: 100, nullable: false})
+    name: string;
+
+    @Column({ length: 100, nullable: false})
+    email: string;
+
+    // alterar para 11, guardar sem mascara
     @Index()
     @Column({ length: 14, unique: true, nullable: false })
     cpf: string;
 
-    @Column()
+    @Column({ length: 11 })
+    phonenumber: string;
+
+    @Column({ length: 8 })
+    cep: string;
+
+    @Column({ length: 2 })
+    uf: string;
+
+    @Column({ length: 30 })
+    city: string;
+
+    @Column({ length: 40 })
+    neighborhood: string;
+
+    @Column({ length: 100 })
+    street: string;
+
+    @Column({ length: 100 })
     password: string;
 
     @ManyToOne(() => Role, role => role.users)
