@@ -3,14 +3,15 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
+import { InvitesService } from 'src/invites/invites.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly invitesService: InvitesService
   ) { }
-
 
   async register(cpf: string, password: string): Promise<User> {
     const createUserDto = { cpf, password };

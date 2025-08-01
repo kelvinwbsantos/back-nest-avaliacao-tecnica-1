@@ -12,6 +12,7 @@ import { MailerModule } from 'src/mailer/mailer.module';
     MailerModule
   ],
   controllers: [InvitesController],
-  providers: [InvitesService]
+  providers: [InvitesService],
+  exports: [InvitesService]
 })
 export class InvitesModule {}
