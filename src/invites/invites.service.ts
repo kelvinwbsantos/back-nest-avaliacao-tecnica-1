@@ -89,7 +89,7 @@ export class InvitesService {
             throw new BadRequestException('Expired invite');
         }
 
-        return { email: invite.email, sender: invite.sender};
+        return { email: invite.email, sender: invite.sender };
     }
 
     async completeInvite(token: string) {
@@ -105,5 +105,23 @@ export class InvitesService {
         await this.inviteRepository.save(existingInvite);
 
         return existingInvite;
+    }
+
+    async getInvites(sender: string) {
+        const invites = await this.inviteRepository.find({
+            where: { sender },
+            order: { createdAt: 'DESC' }
+        });
+
+        if (invites.length === 0) {
+            throw new NotFoundException('No invites found for this sender');
+        }
+
+        const invitesWithStatus = invites.map(invite => ({
+            sender: invite.email,
+            status: invite.status,
+        }));
+
+        return invitesWithStatus;
     }
 }

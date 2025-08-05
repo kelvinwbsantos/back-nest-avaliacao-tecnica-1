@@ -27,4 +27,11 @@ export class InvitesController {
     async validate(@Query('token') token: string) {
         return await this.invitesService.validateToken(token);
     }
+
+    @Get('getInvites')
+    @ApiOperation({ summary: 'Busca todos os convites que um email criou' })
+    @ApiQuery({ name: 'sender', required: true })
+    async getInvites(@Query('sender') sender: string) {
+        return await this.invitesService.getInvites(sender);
+    }
 }
