@@ -4,6 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { InvitesService } from 'src/invites/invites.service';
+import { CreateUserDto } from 'src/users/dto/user.dto';
+import { LoginDto, RegisterDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -13,12 +15,29 @@ export class AuthService {
     private readonly invitesService: InvitesService
   ) { }
 
-  async register(cpf: string, password: string): Promise<User> {
-    const createUserDto = { cpf, password };
+  async register(registerDto: RegisterDto): Promise<User> {
+    const { token, ...registerDtoWithoutToken } = registerDto;
+
+    this.invitesService.completeInvite(token);
+
+    const cleanCpf = registerDto.cpf.replace(/\D/g, '');
+    const cleanPhonenumber = registerDto.phonenumber?.replace(/\D/g, '');
+    const cleanCep = registerDto.cep?.replace(/\D/g, '');
+
+    const createUserDto: CreateUserDto = {
+      ...registerDtoWithoutToken,
+      cpf: cleanCpf,
+      phonenumber: cleanPhonenumber,
+      cep: cleanCep
+    }
+
     return this.usersService.create(createUserDto);
   }
 
-  async validateUser(cpf: string, password: string): Promise<{ access_token: string }> {
+  async login(loginDto: LoginDto): Promise<{ access_token: string }> {
+
+    const cpf = loginDto.cpf.replace(/\D/g, '');
+    const password = loginDto.password;
 
     const user = await this.usersService.findByCpf(cpf);
     if (!user) {
@@ -30,7 +49,7 @@ export class AuthService {
       throw new UnauthorizedException('CPF ou senha inválidos');
     }
 
-    const payload = { sub: user.id, cpf: user.cpf, role: user.role.name };
+    const payload = { sub: user.id, email: user.email, role: user.role.name };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };

@@ -92,4 +92,18 @@ export class InvitesService {
         return { email: invite.email, sender: invite.sender};
     }
 
+    async completeInvite(token: string) {
+        const existingInvite = await this.inviteRepository.findOne({
+            where: { token }
+        });
+
+        if (!existingInvite) {
+            throw new NotFoundException('Invite not found');
+        }
+
+        existingInvite.status = InviteStatus.COMPLETED;
+        await this.inviteRepository.save(existingInvite);
+
+        return existingInvite;
+    }
 }

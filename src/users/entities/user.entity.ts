@@ -35,7 +35,7 @@ export class User {
     @Column({ length: 100 })
     street: string;
 
-    @Column({ length: 100 })
+    @Column({ length: 100, nullable: false })
     password: string;
 
     @ManyToOne(() => Role, role => role.users)

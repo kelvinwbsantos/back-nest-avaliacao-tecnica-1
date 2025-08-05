@@ -16,7 +16,7 @@ import {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   @ApiOperation({ summary: 'Registrar um novo usuário' })
@@ -24,10 +24,7 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Usuário registrado com sucesso' })
   @ApiResponse({ status: 400, description: 'Usuário com este CPF já existe.' })
   async register(@Body(new ValidationPipe()) registerDto: RegisterDto) {
-    const user = await this.authService.register(
-      registerDto.cpf,
-      registerDto.password,
-    );
+    const user = await this.authService.register(registerDto);
     return { message: 'Usuário registrado com sucesso', cpf: user.cpf };
   }
 
@@ -37,10 +34,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login realizado com sucesso' })
   @ApiResponse({ status: 401, description: 'CPF ou senha inválidos' })
   async login(@Body(new ValidationPipe()) loginDto: LoginDto) {
-    const user = await this.authService.validateUser(
-      loginDto.cpf,
-      loginDto.password,
-    );
+    const user = await this.authService.login(loginDto);
     return {
       message: 'Login realizado com sucesso',
       access_token: user.access_token,

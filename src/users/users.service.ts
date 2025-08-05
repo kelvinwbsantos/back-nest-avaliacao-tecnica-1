@@ -16,6 +16,13 @@ export class UsersService {
         private readonly rolesRepository: Repository<Role>,
     ) { }
 
+    /**
+     * Cria um novo usuário com a role "colaborador".
+     *
+     * @param {CreateUserDto} createUserDto - DTO com dados do usuário.
+     * @throws {BadRequestException} Se o CPF já existir ou a role estiver ausente.
+     * @returns {Promise<User>} O usuário criado.
+     */
     async create(createUserDto: CreateUserDto): Promise<User> {
         const { cpf, password } = createUserDto;
 
@@ -28,13 +35,14 @@ export class UsersService {
 
         const colaboradorRole = await this.rolesRepository.findOne({
             where: { name: 'colaborador' },
-        })
+        });
+
         if (!colaboradorRole) {
             throw new BadRequestException('Role "colaborador" does not exist');
         }
-        
+
         const user = this.usersRepository.create({
-            cpf,
+            ...createUserDto,
             password: hashedPassword,
             role: colaboradorRole,
         });
@@ -42,6 +50,12 @@ export class UsersService {
         return this.usersRepository.save(user);
     }
 
+    /**
+     * Busca um usuário pelo CPF e retorna com a role.
+     *
+     * @param {string} cpf - CPF do usuário.
+     * @returns {Promise<User | null>} Usuário encontrado ou null.
+     */
     async findByCpf(cpf: string): Promise<User | null> {
         return this.usersRepository.findOne({ where: { cpf }, relations: ['role'] });
     }
