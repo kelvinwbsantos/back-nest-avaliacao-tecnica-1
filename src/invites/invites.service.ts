@@ -118,7 +118,7 @@ export class InvitesService {
         }
 
         const invitesWithStatus = invites.map(invite => ({
-            sender: invite.email,
+            email: invite.email,
             status: invite.status,
         }));
 
