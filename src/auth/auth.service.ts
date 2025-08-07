@@ -5,7 +5,7 @@ import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { InvitesService } from 'src/invites/invites.service';
 import { CreateUserDto } from 'src/users/dto/user.dto';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -15,29 +15,25 @@ export class AuthService {
     private readonly invitesService: InvitesService
   ) { }
 
-  async register(registerDto: RegisterDto): Promise<User> {
+  async register(registerDto: RegisterDto): Promise<String> {
     const { token, ...registerDtoWithoutToken } = registerDto;
 
-    this.invitesService.completeInvite(token);
-
-    const cleanCpf = registerDto.cpf.replace(/\D/g, '');
-    const cleanPhonenumber = registerDto.phonenumber?.replace(/\D/g, '');
-    const cleanCep = registerDto.cep?.replace(/\D/g, '');
+    try { this.invitesService.validateToken(token) } catch (error) {
+      throw new UnauthorizedException('Token de convite inválido ou expirado');
+    }
 
     const createUserDto: CreateUserDto = {
       ...registerDtoWithoutToken,
-      cpf: cleanCpf,
-      phonenumber: cleanPhonenumber,
-      cep: cleanCep
     }
 
-    return this.usersService.create(createUserDto);
+    const user = await this.usersService.create(createUserDto);
+
+    return user.cpf;
   }
 
   async login(loginDto: LoginDto): Promise<{ access_token: string }> {
 
-    const cpf = loginDto.cpf.replace(/\D/g, '');
-    const password = loginDto.password;
+    const { cpf, password } = loginDto;
 
     const user = await this.usersService.findByCpf(cpf);
     if (!user) {

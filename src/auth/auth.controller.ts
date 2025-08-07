@@ -14,19 +14,20 @@ import {
 } from '@nestjs/swagger';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Post('register')
-  @ApiOperation({ summary: 'Registrar um novo usuário' })
+  @ApiOperation({ summary: 'Registrar um novo usuário convidado' })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({ status: 201, description: 'Usuário registrado com sucesso' })
-  @ApiResponse({ status: 400, description: 'Usuário com este CPF já existe.' })
-  async register(@Body(new ValidationPipe()) registerDto: RegisterDto) {
-    const user = await this.authService.register(registerDto);
-    return { message: 'Usuário registrado com sucesso', cpf: user.cpf };
+  @ApiResponse({ status: 400, description: 'Usuário com este CPF já existe' })
+  @ApiResponse({ status: 401, description: 'Token de convite inválido ou expirado' })
+  async register(@Body() registerDto: RegisterDto) {
+    const cpf = await this.authService.register(registerDto);
+    return { message: 'Usuário registrado com sucesso', cpf};
   }
 
   @Post('login')
@@ -34,7 +35,7 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'Login realizado com sucesso' })
   @ApiResponse({ status: 401, description: 'CPF ou senha inválidos' })
-  async login(@Body(new ValidationPipe()) loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto) {
     const user = await this.authService.login(loginDto);
     return {
       message: 'Login realizado com sucesso',
