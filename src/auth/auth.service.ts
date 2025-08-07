@@ -18,7 +18,7 @@ export class AuthService {
   async register(registerDto: RegisterDto): Promise<String> {
     const { token, ...registerDtoWithoutToken } = registerDto;
 
-    try { this.invitesService.validateToken(token) } catch (error) {
+    try { this.invitesService.validate(token) } catch (error) {
       throw new UnauthorizedException('Token de convite inválido ou expirado');
     }
 

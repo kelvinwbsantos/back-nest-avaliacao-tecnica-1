@@ -22,6 +22,14 @@ export class InvitesService {
             where: { email }
         });
 
+        if (
+            existingInvite &&
+            (existingInvite.status === InviteStatus.PENDING ||
+                existingInvite.status === InviteStatus.COMPLETED)
+        ) {
+            throw new ConflictException('Convite já existe para este email');
+        }
+
         const now = new Date();
         const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h
         const payload = { email, sender };
@@ -30,63 +38,54 @@ export class InvitesService {
             expiresIn: '1d',
         });
 
-        if (existingInvite) {
-            if (existingInvite.status === InviteStatus.PENDING ||
-                existingInvite.status === InviteStatus.COMPLETED
-            ) {
-                throw new ConflictException('User already been invited.');
-            }
+        let invite;
 
+        if (existingInvite) {
             if (existingInvite.status === InviteStatus.EXPIRED) {
                 existingInvite.token = token;
                 existingInvite.status = InviteStatus.PENDING;
                 existingInvite.createdAt = now;
                 existingInvite.expiresAt = expiresAt;
                 existingInvite.sender = sender;
-
-                await this.inviteRepository.save(existingInvite);
-                await this.mailerService.sendInvitationEmail(email, token);
-
-                return existingInvite;
             }
+        } else {
+            invite = this.inviteRepository.create({
+                email,
+                token,
+                sender,
+                status: InviteStatus.PENDING,
+                createdAt: now,
+                expiresAt,
+            });
         }
-
-        const invite = this.inviteRepository.create({
-            email,
-            token,
-            sender,
-            status: InviteStatus.PENDING,
-            createdAt: now,
-            expiresAt,
-        });
 
         await this.inviteRepository.save(invite);
         await this.mailerService.sendInvitationEmail(email, token);
 
-        return invite;
+        return invite.email;
     }
 
 
-    async validateToken(token: string) {
+    async validate(token: string) {
         let payload: { email: string; sender: string };
 
         try {
             payload = await this.jwtService.verifyAsync(token);
         } catch (err) {
-            throw new BadRequestException('Invalid or expired token');
+            throw new BadRequestException('Token inválido ou expirado');
         }
 
         const { email } = payload;
 
         const invite = await this.inviteRepository.findOne({ where: { email, token } });
+        if (!invite) throw new NotFoundException('Convite não existe');
 
-        if (!invite) throw new NotFoundException('Invite not found');
-        if (invite.status === InviteStatus.COMPLETED) throw new BadRequestException('Invite already used');
+        if (invite.status === InviteStatus.COMPLETED) throw new BadRequestException('Token inválido ou expirado');
 
         if (new Date() > invite.expiresAt) {
             invite.status = InviteStatus.EXPIRED;
             await this.inviteRepository.save(invite);
-            throw new BadRequestException('Expired invite');
+            throw new BadRequestException('Token inválido ou expirado');
         }
 
         return { email: invite.email, sender: invite.sender };
@@ -114,7 +113,7 @@ export class InvitesService {
         });
 
         if (invites.length === 0) {
-            throw new NotFoundException('No invites found for this sender');
+            throw new NotFoundException('Não existe convites enviados por este email');
         }
 
         const invitesWithStatus = invites.map(invite => ({

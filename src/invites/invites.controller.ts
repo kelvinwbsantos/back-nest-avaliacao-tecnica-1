@@ -12,25 +12,26 @@ export class InvitesController {
     @Post()
     @ApiOperation({ summary: 'Criar um novo convite' })
     @ApiBody({ type: CreateInviteDto })
-    @ApiResponse({ status: 201, description: 'Invite created succesfuly' })
-    @ApiResponse({ status: 409, description: 'User already been invited.' })
+    @ApiResponse({ status: 201, description: 'Convite criado com sucesso' })
+    @ApiResponse({ status: 409, description: 'Convite já existe para este email' })
     async create(@Body() createInviteDto: CreateInviteDto) {
         return await this.invitesService.createInvite(createInviteDto);
     }
 
-    @Get('validateToken')
+    @Get('validate')
     @ApiOperation({ summary: 'Valida um token JWT de convite' })
     @ApiQuery({ name: 'token', required: true })
     @ApiResponse({ status: 200, description: 'Token é valido' })
-    @ApiResponse({ status: 400, description: 'Invalid or expired token' })
-    @ApiResponse({ status: 404, description: 'Invite not found' })
+    @ApiResponse({ status: 400, description: 'Token inválido ou expirado' })
+    @ApiResponse({ status: 404, description: 'Convite não existe' })
     async validate(@Query('token') token: string) {
-        return await this.invitesService.validateToken(token);
+        return await this.invitesService.validate(token);
     }
 
     @Get('getInvites')
-    @ApiOperation({ summary: 'Busca todos os convites que um email criou' })
+    @ApiOperation({ summary: 'Busca todos os convites enviados por um email' })
     @ApiQuery({ name: 'sender', required: true })
+    @ApiResponse({ status: 404, description: 'Não existe convites enviados por este email' })
     async getInvites(@Query('sender') sender: string) {
         return await this.invitesService.getInvites(sender);
     }
