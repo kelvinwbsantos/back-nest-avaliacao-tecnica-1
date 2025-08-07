@@ -5,13 +5,14 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
+import { LoginDto, RegisterDto } from './dto/auth.dto';
 
 @ApiTags('auth')
 @Controller('auth')

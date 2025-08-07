@@ -1,87 +1,124 @@
-import { IsString, MinLength, Matches, Length, IsEmail } from 'class-validator';
+import { IsString, MinLength, Matches, Length, IsEmail, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class RegisterDto {
   @ApiProperty({
-    description: 'Token do convite',
-    example: '432423sadasd0',
+    description: 'Token de convite fornecido para o registro do usuário.',
+    example: 'a12b3c4d5f6g7h8i9j0k',
   })
   @IsString()
   token!: string;
 
   @ApiProperty({
-    description: 'CPF do usuário no formato 000.000.000-00',
-    example: '123.456.789-00',
+    description: 'CPF do usuário, que pode ser enviado com ou sem máscara.',
+    example: '123.456.678-90',
   })
-  @IsString()
-  @Matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, {
-    message: 'CPF deve estar no formato 000.000.000-00',
-  })
+  @Transform(({ value }) => value.replace(/\D/g, ''))
+  @Matches(/^\d{11}$/, { message: 'CPF deve conter exatamente 11 dígitos numéricos.' })
   cpf!: string;
 
-  @ApiProperty({ example: 'João Silva' })
+  @ApiProperty({
+    description: 'Nome completo do usuário.',
+    example: 'John Doe',
+  })
   @IsString()
-  name: string;
+  name!: string;
 
-  @ApiProperty({ example: 'joao@email.com' })
-  @IsEmail()
-  email: string;
+  @ApiProperty({
+    description: 'Endereço de e-mail do usuário',
+    example: 'johndoe@example.com',
+  })
+  @IsEmail({}, { message: 'Formato de e-mail inválido.' })
+  email!: string;
 
-  @ApiProperty({ example: '(11) 98765-4321' })
+  @ApiProperty({
+    description: 'Número de telefone do usuário (opcional), podendo ser enviado com ou sem máscara.',
+    example: '(12) 12345-1234',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @Length(14, 15)
+  @Transform(({ value }) => value?.replace(/\D/g, ''))
   phonenumber?: string;
 
-  @ApiProperty({ example: '12345-678' })
+  @ApiProperty({
+    description: 'CEP do endereço do usuário (opcional), que pode ser enviado com ou sem o hífen.',
+    example: '12345-678',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
-  @Length(9)
+  @Transform(({ value }) => value?.replace('-', ''))
+  @Matches(/^\d{8}$/, { message: 'CEP deve conter exatamente 8 dígitos numéricos.' })
   cep?: string;
 
-  @ApiProperty({ example: 'SP' })
+  @ApiProperty({
+    description: 'Unidade Federativa (estado) do endereço do usuário (opcional), com 2 letras.',
+    example: 'AL',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
   @Length(2, 2)
   uf?: string;
 
-  @ApiProperty({ example: 'São Paulo' })
+  @ApiProperty({
+    description: 'Cidade do endereço do usuário (opcional).',
+    example: 'Maceió',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
   city?: string;
 
-  @ApiProperty({ example: 'Centro' })
+  @ApiProperty({
+    description: 'Bairro do endereço do usuário (opcional).',
+    example: 'Pajuçara',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
   neighborhood?: string;
 
-  @ApiProperty({ example: 'Rua das Flores' })
+  @ApiProperty({
+    description: 'Rua do endereço do usuário (opcional).',
+    example: 'Rua dos Bobos',
+    required: false,
+  })
+  @IsOptional()
   @IsString()
   street?: string;
 
   @ApiProperty({
-    description: 'Senha do usuário com pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais',
+    description: 'Senha do usuário. Deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais.',
     example: 'Senha@1234',
   })
   @IsString()
-  @MinLength(8)
-  @Matches(/(?=.*[a-z])/, { message: 'Deve conter ao menos uma letra minúscula' })
-  @Matches(/(?=.*[A-Z])/, { message: 'Deve conter ao menos uma letra maiúscula' })
-  @Matches(/(?=.*\d)/, { message: 'Deve conter ao menos um número' })
-  @Matches(/(?=.*[\W_])/, { message: 'Deve conter ao menos um caractere especial' })
+  @MinLength(8, { message: 'A senha deve ter no mínimo 8 caracteres.' })
+  @Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, {
+    message: 'A senha deve conter ao menos uma letra minúscula, uma maiúscula, um número e um caractere especial.',
+  })
   password!: string;
 }
 
 export class LoginDto {
   @ApiProperty({
-    description: 'CPF do usuário no formato 000.000.000-00',
-    example: '123.456.789-00',
+    description: 'CPF do usuário, que pode ser enviado com ou sem máscara.',
+    example: '123.456.678-90',
   })
-  @IsString()
-  @Matches(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, {
-    message: 'CPF deve estar no formato 000.000.000-00',
-  })
+  @Transform(({ value }) => value.replace(/\D/g, ''))
+  @Matches(/^\d{11}$/, { message: 'CPF deve conter exatamente 11 dígitos numéricos.' })
   cpf!: string;
 
   @ApiProperty({
-    description: 'Senha do usuário',
+    description: 'Senha do usuário. Deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais.',
     example: 'Senha@1234',
   })
   @IsString()
+  @MinLength(8, { message: 'A senha deve ter no mínimo 8 caracteres.' })
+  @Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, {
+    message: 'A senha deve conter ao menos uma letra minúscula, uma maiúscula, um número e um caractere especial.',
+  })
   password!: string;
 }
