@@ -22,11 +22,8 @@ export class InvitesService {
             where: { email }
         });
 
-        if (
-            existingInvite &&
-            (existingInvite.status === InviteStatus.PENDING ||
-                existingInvite.status === InviteStatus.COMPLETED)
-        ) {
+        if ( existingInvite && existingInvite.status === InviteStatus.COMPLETED)
+        {
             throw new ConflictException('Convite já existe para este email');
         }
 
@@ -41,7 +38,7 @@ export class InvitesService {
         let invite;
 
         if (existingInvite) {
-            if (existingInvite.status === InviteStatus.EXPIRED) {
+            if (existingInvite.status === InviteStatus.EXPIRED || existingInvite.status === InviteStatus.PENDING) {
                 existingInvite.token = token;
                 existingInvite.status = InviteStatus.PENDING;
                 existingInvite.createdAt = now;
