@@ -10,6 +10,7 @@ import { InvitesModule } from './invites/invites.module';
 import { MailerService } from './mailer/mailer.service';
 import { MailerModule } from './mailer/mailer.module';
 import { GlobalJwtModule } from './shared/global-jwt.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { GlobalJwtModule } from './shared/global-jwt.module';
     UsersModule,
     InvitesModule,
     MailerModule,
-    GlobalJwtModule
+    GlobalJwtModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService, MailerService],

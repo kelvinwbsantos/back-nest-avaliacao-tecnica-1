@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
@@ -58,5 +58,48 @@ export class UsersService {
      */
     async findByCpf(cpf: string): Promise<User | null> {
         return this.usersRepository.findOne({ where: { cpf }, relations: ['role'] });
+    }
+
+    /**
+     * Busca todos os usuários com paginação e filtros opcionais.
+     *
+     * @param {number} page - Número da página.
+     * @param {number} limit - Limite de itens por página.
+     * @param {string} [name] - Nome para filtro opcional.
+     * @param {string} [email] - Email para filtro opcional.
+     * @param {string} [cpf] - CPF para filtro opcional.
+     * @returns {Promise<{ data: User[], total: number }>} Lista de usuários e total.
+     */
+    async findAll(page: number, limit: number, name?: string, email?: string, cpf?: string): Promise<{ data: User[], total: number }> {
+        const skip = (page - 1) * limit;
+
+        const where: any = {};
+
+        if (name) {
+            where.name = Like(`%${name}%`);
+        }
+        if (email) {
+            where.email = Like(`%${email}%`);
+        }
+        if (cpf) {
+            where.cpf = Like(`%${cpf}%`);
+        }
+
+        const findOptions: FindManyOptions<User> = {
+            order: {
+                name: 'ASC',
+            },
+            skip: skip,
+            take: limit,
+            where: where,
+            select: ['id', 'name', 'email', 'cpf'],
+        };
+
+        const [data, total] = await this.usersRepository.findAndCount(findOptions);
+
+        return {
+            data,
+            total,
+        };
     }
 }
