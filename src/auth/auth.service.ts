@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { InvitesService } from 'src/invites/invites.service';
 import { CreateUserDto } from 'src/users/dto/user.dto';
@@ -45,7 +44,7 @@ export class AuthService {
       throw new UnauthorizedException('CPF ou senha inválidos');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role.name };
+    const payload = { sub: user.id, name: user.name, email: user.email, role: user.role.name };
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
