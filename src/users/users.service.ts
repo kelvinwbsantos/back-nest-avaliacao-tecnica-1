@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { FindManyOptions, Like, Repository } from 'typeorm';
+import { FindManyOptions, ILike, Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
@@ -76,7 +76,7 @@ export class UsersService {
         const where: any = {};
 
         if (name) {
-            where.name = Like(`%${name}%`);
+            where.name = ILike(`%${name}%`);
         }
         if (email) {
             where.email = Like(`%${email}%`);
