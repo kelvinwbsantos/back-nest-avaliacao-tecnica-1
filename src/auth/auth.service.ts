@@ -27,6 +27,8 @@ export class AuthService {
 
     const user = await this.usersService.create(createUserDto);
 
+    this.invitesService.completeInvite(token);
+    
     return user.cpf;
   }
 
