@@ -28,11 +28,18 @@ export class InvitesController {
         return await this.invitesService.validate(token);
     }
 
-    @Get('getInvites')
-    @ApiOperation({ summary: 'Busca todos os convites enviados por um email' })
-    @ApiQuery({ name: 'sender', required: true })
+    @Get()
+    @ApiOperation({ summary: 'Busca convites enviados por um email com paginação' })
+    @ApiQuery({ name: 'sender', required: true, description: 'Email do remetente dos convites' })
+    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Limite de convites por página' })
+    @ApiResponse({ status: 200, description: 'Lista de convites retornada com sucesso' })
     @ApiResponse({ status: 404, description: 'Não existe convites enviados por este email' })
-    async getInvites(@Query('sender') sender: string) {
-        return await this.invitesService.getInvites(sender);
+    async getInvites(
+        @Query('sender') sender: string,
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10,
+    ) {
+        return await this.invitesService.getInvites(Number(page), Number(limit), sender);
     }
 }

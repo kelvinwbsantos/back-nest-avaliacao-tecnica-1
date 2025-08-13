@@ -22,8 +22,7 @@ export class InvitesService {
             where: { email }
         });
 
-        if ( existingInvite && existingInvite.status === InviteStatus.COMPLETED)
-        {
+        if (existingInvite && existingInvite.status === InviteStatus.COMPLETED) {
             throw new ConflictException('Convite já existe para este email');
         }
 
@@ -103,13 +102,17 @@ export class InvitesService {
         return existingInvite;
     }
 
-    async getInvites(sender: string) {
-        const invites = await this.inviteRepository.find({
+    async getInvites(page: number, limit: number, sender: string): Promise<{ invites: { email: string, status: string }[], total: number }> {
+        const skip = (page - 1) * limit;
+
+        const [invites, total] = await this.inviteRepository.findAndCount({
             where: { sender },
-            order: { createdAt: 'DESC' }
+            order: { createdAt: 'DESC' },
+            skip: skip,
+            take: limit,
         });
 
-        if (invites.length === 0) {
+        if (invites.length === 0 && total === 0) {
             throw new NotFoundException('Não existe convites enviados por este email');
         }
 
@@ -118,6 +121,9 @@ export class InvitesService {
             status: invite.status,
         }));
 
-        return invitesWithStatus;
+        return {
+            invites: invitesWithStatus,
+            total,
+        };
     }
 }
