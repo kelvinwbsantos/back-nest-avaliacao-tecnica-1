@@ -61,6 +61,16 @@ export class UsersService {
     }
 
     /**
+     * Busca um usuário pelo CPF e retorna com a role.
+     *
+     * @param {string} userId - Id do usuário no banco de dados.
+     * @returns {Promise<User | null>} Usuário encontrado ou null.
+     */
+    async findById(userId: number): Promise<User | null> {
+        return this.usersRepository.findOneBy({ id: userId });
+    }
+
+    /**
      * Busca todos os usuários com paginação e filtros opcionais.
      *
      * @param {number} page - Número da página.

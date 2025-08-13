@@ -1,10 +1,12 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, NotFoundException, Param, ParseIntPipe, Query, UseInterceptors } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { UsersService } from 'src/users/users.service';
 import { PaginationDto } from './dto/pagination.dto';
 import { User } from 'src/users/entities/user.entity';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UserRespondeDto } from 'src/users/dto/user-response.dto';
 
+@ApiTags('Admin')
 @Controller('admin')
 export class AdminController {
   constructor(
@@ -22,4 +24,19 @@ export class AdminController {
 
     return this.usersService.findAll(page, limit, name, email, cpf);
   }
+
+  @Get('user/:id') 
+  @ApiOperation({ summary: 'Buscar um usuário pelo Id' })
+  @ApiResponse({ status: 200, description: 'Usuário retornado com sucesso.', type: UserRespondeDto })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
+  async findById(@Param('id', ParseIntPipe) id: number): Promise<UserRespondeDto> {
+    const user = await this.usersService.findById(id);
+
+    if (!user) {
+      throw new NotFoundException(`Usuário com o ID "${id}" não encontrado.`);
+    }
+
+    return new UserRespondeDto(user);
+  }
+
 }
