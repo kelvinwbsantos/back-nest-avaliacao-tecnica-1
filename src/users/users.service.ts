@@ -67,7 +67,7 @@ export class UsersService {
      * @returns {Promise<User | null>} Usuário encontrado ou null.
      */
     async findById(userId: number): Promise<User | null> {
-        return this.usersRepository.findOneBy({ id: userId });
+        return this.usersRepository.findOne({ where: { id: userId }, relations: ['role'] });
     }
 
     /**

@@ -34,6 +34,10 @@ export class UserRespondeDto {
   @ApiProperty({ example: 'Rua das Flores' })
   street?: string;
 
+  @ApiProperty({ example: 'Colaborador' })
+  role?: string;
+  
+
     /**
    * O construtor é a chave para um mapeamento limpo.
    * Ele recebe a entidade 'User' e atribui apenas os campos
@@ -50,5 +54,6 @@ export class UserRespondeDto {
     this.city = user.city;
     this.neighborhood = user.neighborhood;
     this.street = user.street;
+    this.role = user.role ? user.role.name : undefined;
   }
 }
