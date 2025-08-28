@@ -1,10 +1,12 @@
-import { ClassSerializerInterceptor, Controller, Get, NotFoundException, Param, ParseIntPipe, Query, UseInterceptors } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, NotFoundException, Param, ParseIntPipe, Query, Res, UseInterceptors } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { UsersService } from 'src/users/users.service';
 import { PaginationDto } from './dto/pagination.dto';
 import { User } from 'src/users/entities/user.entity';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserRespondeDto } from 'src/users/dto/user-response.dto';
+import { Response } from 'express';
+import { UserFilterDto } from './dto/userfilter.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -25,7 +27,28 @@ export class AdminController {
     return this.usersService.findAll(page, limit, name, email, cpf);
   }
 
-  @Get('user/:id') 
+  @Get('users/exportXlsx')
+  @ApiOperation({ summary: 'Listar usuários com filtros e exportar como planilha' })
+  @ApiResponse({
+    status: 200,
+    description: 'Arquivo Excel gerado com sucesso.',
+    content: {
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {},
+    },
+  })
+  async exportToExcel(
+    @Query() filters: UserFilterDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { buffer, fileName } = await this.usersService.exportToExcel(filters);
+
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+    res.send(buffer);
+  }
+
+  @Get('user/:id')
   @ApiOperation({ summary: 'Buscar um usuário pelo Id' })
   @ApiResponse({ status: 200, description: 'Usuário retornado com sucesso.', type: UserRespondeDto })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
