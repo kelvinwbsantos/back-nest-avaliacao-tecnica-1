@@ -1,4 +1,4 @@
-import { ClassSerializerInterceptor, Controller, Get, NotFoundException, Param, ParseIntPipe, Query, Res, UseInterceptors } from '@nestjs/common';
+import { Body, ClassSerializerInterceptor, Controller, Get, NotFoundException, Param, ParseIntPipe, Patch, Query, Res, UseInterceptors } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { UsersService } from 'src/users/users.service';
 import { PaginationDto } from './dto/pagination.dto';
@@ -7,6 +7,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserRespondeDto } from 'src/users/dto/user-response.dto';
 import { Response } from 'express';
 import { UserFilterDto } from './dto/userfilter.dto';
+import { UpdateUserRoleDto } from './dto/updateuserole.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -60,6 +61,22 @@ export class AdminController {
     }
 
     return new UserRespondeDto(user);
+  }
+
+  @Patch('user/:id/role')
+  @ApiOperation({ summary: 'Alterar a role de um usuário específico' })
+  @ApiResponse({ status: 200, description: 'Role do usuário alterada com sucesso.', type: UserRespondeDto })
+  @ApiResponse({ status: 400, description: 'Dados inválidos.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
+  async updateUserRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserRoleDto: UpdateUserRoleDto,
+  ): Promise<UserRespondeDto> {
+    const updatedUser = await this.usersService.updateRole(
+      id,
+      updateUserRoleDto.roleName,
+    );
+    return new UserRespondeDto(updatedUser);
   }
 
 }

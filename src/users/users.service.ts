@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { FindManyOptions, ILike, Like, Repository } from 'typeorm';
@@ -48,6 +48,22 @@ export class UsersService {
             password: hashedPassword,
             role: colaboradorRole,
         });
+
+        return this.usersRepository.save(user);
+    }
+
+    async updateRole(userId: number, roleName: string): Promise<User> {
+        const user = await this.usersRepository.findOneBy({ id: userId });
+        if (!user) {
+            throw new NotFoundException(`Usuário com o ID "${userId}" não encontrado.`);
+        }
+
+        const role = await this.rolesRepository.findOneBy({ name: roleName });
+        if (!role) {
+            throw new BadRequestException(`A role "${roleName}" não é válida.`);
+        }
+
+        user.role = role;
 
         return this.usersRepository.save(user);
     }
@@ -119,18 +135,18 @@ export class UsersService {
         const users = await this.findAll(undefined, undefined, filters.name, filters.email, filters.cpf).then(res => res.data);
 
         const mappedData = users.map(user => ({
-        'Nome': user.name,
-        'E-mail': user.email,
-        'CPF': user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'),
+            'Nome': user.name,
+            'E-mail': user.email,
+            'CPF': user.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4'),
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(mappedData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Usuários');
-        
+
         const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
         const fileName = `Relatorio_Usuarios_${new Date().toISOString().split('T')[0]}.xlsx`;
 
         return { buffer, fileName };
-  }
+    }
 }
