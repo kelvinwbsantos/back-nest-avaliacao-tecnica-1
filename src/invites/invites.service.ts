@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { Invite, InviteStatus } from './entities/invite.entity';
 import { MailerService } from 'src/mailer/mailer.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -105,6 +105,8 @@ export class InvitesService {
     async getInvites(page: number, limit: number, sender: string): Promise<{ invites: { email: string, status: string }[], total: number }> {
         const skip = (page - 1) * limit;
 
+        await this.updateExpiredInvites();
+
         const [invites, total] = await this.inviteRepository.findAndCount({
             where: { sender },
             order: { createdAt: 'DESC' },
@@ -126,4 +128,24 @@ export class InvitesService {
             total,
         };
     }
+
+    private async updateExpiredInvites() {
+    const now = new Date();
+
+    const expiredInvites = await this.inviteRepository.find({
+      where: {
+        expiresAt: LessThan(now),
+        status: InviteStatus.PENDING,
+      },
+    });
+
+    if (expiredInvites.length > 0) {
+      for (const invite of expiredInvites) {
+        invite.status = InviteStatus.EXPIRED;
+      }
+
+      await this.inviteRepository.save(expiredInvites);
+      console.log(`Convites expirados atualizados: ${expiredInvites.length}`);
+    }
+  }
 }
