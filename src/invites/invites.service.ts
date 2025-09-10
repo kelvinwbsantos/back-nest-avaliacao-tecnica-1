@@ -102,13 +102,24 @@ export class InvitesService {
         return existingInvite;
     }
 
-    async getInvites(page: number, limit: number, sender: string): Promise<{ invites: { email: string, status: string }[], total: number }> {
+    async getInvites(page: number, limit: number, sender: string, status: string, email: string): Promise<{ invites: { email: string, createdAt: Date, expiresAt: Date, status: string }[], total: number }> {
         const skip = (page - 1) * limit;
 
         await this.updateExpiredInvites();
 
+        const whereCondition: any = { sender };
+
+
+        if (status) {
+            whereCondition.status = status;
+        }
+
+        if (email) {
+        whereCondition.email = email;
+        }
+
         const [invites, total] = await this.inviteRepository.findAndCount({
-            where: { sender },
+            where: whereCondition,
             order: { createdAt: 'DESC' },
             skip: skip,
             take: limit,
@@ -118,34 +129,36 @@ export class InvitesService {
             throw new NotFoundException('Não existe convites enviados por este email');
         }
 
-        const invitesWithStatus = invites.map(invite => ({
+        const invitesWithDetails = invites.map(invite => ({
             email: invite.email,
+            createdAt: invite.createdAt,
+            expiresAt: invite.expiresAt,
             status: invite.status,
         }));
 
         return {
-            invites: invitesWithStatus,
+            invites: invitesWithDetails,
             total,
         };
     }
 
     private async updateExpiredInvites() {
-    const now = new Date();
+        const now = new Date();
 
-    const expiredInvites = await this.inviteRepository.find({
-      where: {
-        expiresAt: LessThan(now),
-        status: InviteStatus.PENDING,
-      },
-    });
+        const expiredInvites = await this.inviteRepository.find({
+            where: {
+                expiresAt: LessThan(now),
+                status: InviteStatus.PENDING,
+            },
+        });
 
-    if (expiredInvites.length > 0) {
-      for (const invite of expiredInvites) {
-        invite.status = InviteStatus.EXPIRED;
-      }
+        if (expiredInvites.length > 0) {
+            for (const invite of expiredInvites) {
+                invite.status = InviteStatus.EXPIRED;
+            }
 
-      await this.inviteRepository.save(expiredInvites);
-      console.log(`Convites expirados atualizados: ${expiredInvites.length}`);
+            await this.inviteRepository.save(expiredInvites);
+            console.log(`Convites expirados atualizados: ${expiredInvites.length}`);
+        }
     }
-  }
 }
