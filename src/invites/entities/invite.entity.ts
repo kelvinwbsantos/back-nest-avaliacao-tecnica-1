@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
 export enum InviteStatus {
   PENDING = 'Em Aberto',
@@ -7,6 +7,8 @@ export enum InviteStatus {
 }
 
 @Entity('invites')
+@Index('IDX_EMAIL', ['email'])
+@Index('IDX_STATUS', ['status'])
 export class Invite {
   @PrimaryGeneratedColumn('uuid')
   id: string;
