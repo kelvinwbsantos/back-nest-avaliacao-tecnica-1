@@ -12,6 +12,7 @@ import { MailerModule } from './mailer/mailer.module';
 import { GlobalJwtModule } from './shared/global-jwt.module';
 import { AdminModule } from './admin/admin.module';
 import { SeedModule } from './seeds/seed.module';
+import { QuestionsModule } from './questions/questions.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { SeedModule } from './seeds/seed.module';
     MailerModule,
     GlobalJwtModule,
     AdminModule,
-    SeedModule
+    SeedModule,
+    QuestionsModule
   ],
   controllers: [AppController],
   providers: [AppService, MailerService],
