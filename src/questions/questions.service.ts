@@ -1,15 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from './entities/question.entity';
 import { Repository } from 'typeorm';
+import { GeminiService } from './gemini.service';
+import type { Multer } from 'multer';
 
 @Injectable()
 export class QuestionsService {
   constructor(
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
+    private readonly geminiService: GeminiService,
   ) { }
 
   async create(createQuestionDto: CreateQuestionDto): Promise<Question> {
@@ -85,5 +88,47 @@ export class QuestionsService {
     const question = await this.findOne(id);
     question.isActive = false;
     return await this.questionRepository.save(question);
+  }
+
+  async generateFromPDF(
+    file: Multer.File,
+    quantity: number,
+    validity_months: number,
+  ): Promise<{
+    created: number;
+    questions: Question[];
+    message: string;
+  }> {
+    if (!file) {
+      throw new BadRequestException('Nenhum arquivo PDF foi enviado');
+    }
+
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestException('O arquivo deve ser um PDF');
+    }
+
+    const generatedQuestions = await this.geminiService.generateQuestionsFromPDF(
+      file.buffer,
+      quantity
+    );
+
+    // Salva as questões geradas no banco de dados
+    const questions = generatedQuestions.map(q =>
+      this.questionRepository.create({
+        question: q.question,
+        answer: q.answer,
+        validity_months,
+        isActive: true,
+      })
+    );
+
+    const savedQuestions = await this.questionRepository.save(questions);
+    //
+
+    return {
+      created: savedQuestions.length,
+      questions: savedQuestions,
+      message: `${savedQuestions.length} questões geradas com sucesso!`
+    };
   }
 }

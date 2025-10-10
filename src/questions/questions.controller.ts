@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UploadedFile, BadRequestException, UseInterceptors } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { GenerateQuestionsDto } from './dto/generate-questions.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Multer } from 'multer';
 
 @ApiTags('questions')
 @Controller('questions')
@@ -47,6 +50,76 @@ export class QuestionsController {
   @ApiResponse({ status: 404, description: 'Question not found' })
   remove(@Param('id') id: string) {
     return this.questionsService.softRemove(id);
+  }
+
+  @Post('generate-from-pdf')
+  @UseInterceptors(FileInterceptor('file', {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype !== 'application/pdf') {
+        return cb(new BadRequestException('Apenas arquivos PDF são permitidos'), false);
+      }
+      cb(null, true);
+    },
+  }))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Gerar questões automaticamente a partir de um PDF usando IA' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Arquivo PDF contendo o conteúdo base'
+        },
+        quantity: {
+          type: 'number',
+          default: 10,
+          description: 'Quantidade de questões a gerar'
+        },
+        validity_months: {
+          type: 'number',
+          default: 12,
+          description: 'Meses de validade das questões'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Questões geradas com sucesso',
+    schema: {
+      example: {
+        created: 10,
+        message: "10 questões geradas com sucesso!",
+        questions: [
+          {
+            id: "uuid",
+            question: "A fotossíntese é o processo pelo qual as plantas produzem energia?",
+            answer: true,
+            validity_months: 12,
+            isActive: true,
+            createdAt: "2025-10-09T10:00:00Z",
+            updatedAt: "2025-10-09T10:00:00Z"
+          }
+        ]
+      }
+    }
+  })
+  @ApiResponse({ status: 400, description: 'PDF inválido ou erro na geração' })
+  async generateFromPDF(
+    @UploadedFile() file: Multer.File,
+    @Body() dto: GenerateQuestionsDto,
+  ) {
+    return await this.questionsService.generateFromPDF(
+      file,
+      dto.quantity || 10,
+      dto.validity_months || 12,
+    );
   }
 }
 
