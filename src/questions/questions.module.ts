@@ -4,10 +4,11 @@ import { QuestionsController } from './questions.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Question } from './entities/question.entity';
 import { GeminiService } from './gemini.service';
+import { Certification } from 'src/certifications/entities/certification.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Question])
+    TypeOrmModule.forFeature([Question, Certification])
   ],
   controllers: [QuestionsController],
   providers: [QuestionsService, GeminiService],
