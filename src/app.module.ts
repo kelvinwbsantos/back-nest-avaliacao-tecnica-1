@@ -14,6 +14,7 @@ import { AdminModule } from './admin/admin.module';
 import { SeedModule } from './seeds/seed.module';
 import { QuestionsModule } from './questions/questions.module';
 import { CertificationsModule } from './certifications/certifications.module';
+import { EnrollmentsModule } from './enrollments/enrollments.module';
 
 @Module({
   imports: [
@@ -41,7 +42,8 @@ import { CertificationsModule } from './certifications/certifications.module';
     AdminModule,
     SeedModule,
     QuestionsModule,
-    CertificationsModule
+    CertificationsModule,
+    EnrollmentsModule
   ],
   controllers: [AppController],
   providers: [AppService, MailerService],

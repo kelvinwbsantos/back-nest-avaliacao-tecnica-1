@@ -1,15 +1,16 @@
+import { Enrollment } from 'src/enrollments/entities/enrollment.entity';
 import { Role } from 'src/roles/entities/role.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ length: 100, nullable: false})
+    @Column({ length: 100, nullable: false })
     name: string;
 
-    @Column({ length: 100, nullable: false})
+    @Column({ length: 100, nullable: false })
     email: string;
 
     // alterar para 11, guardar sem mascara
@@ -41,6 +42,9 @@ export class User {
     @ManyToOne(() => Role, role => role.users)
     @JoinColumn({ name: 'role_id' })
     role: Role;
+
+    @OneToMany(() => Enrollment, (enrollment) => enrollment.user)
+    enrollments: Enrollment[];
 
     @CreateDateColumn()
     createdAt: Date;

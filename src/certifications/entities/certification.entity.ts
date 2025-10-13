@@ -1,3 +1,4 @@
+import { Enrollment } from "src/enrollments/entities/enrollment.entity";
 import { Question } from "src/questions/entities/question.entity";
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -24,11 +25,14 @@ export class Certification {
     @Column({ nullable: false, default: 2 })
     durationHours: number;
 
-    @Column({ nullable: false , default: true})
+    @Column({ nullable: false, default: true })
     isActive: boolean;
 
     @OneToMany(() => Question, question => question.certification)
     questions: Question[];
+
+    @OneToMany(() => Enrollment, enrollment => enrollment.certification)
+    enrollments: Enrollment[];
 
     @CreateDateColumn()
     createdAt: Date;
