@@ -6,27 +6,45 @@ import { Question } from './entities/question.entity';
 import { Repository } from 'typeorm';
 import { GeminiService } from './gemini.service';
 import type { Multer } from 'multer';
+import { Certification } from 'src/certifications/entities/certification.entity';
 
 @Injectable()
 export class QuestionsService {
   constructor(
     @InjectRepository(Question)
     private readonly questionRepository: Repository<Question>,
+    private readonly certificationRepository: Repository<Certification>,
     private readonly geminiService: GeminiService,
   ) { }
 
   async create(createQuestionDto: CreateQuestionDto): Promise<Question> {
-    const { question, answer, validity_months } = createQuestionDto;
+    const { question, answer, validity_months, certificationId } = createQuestionDto;
+
+    const certification = await this.certificationRepository.findOneBy({ id: certificationId });
+    if (!certification) {
+      throw new NotFoundException(`Certification with ID ${certificationId} not found`);
+    }
 
     const newQuestion = this.questionRepository.create({
       question,
       answer,
       validity_months,
+      certificationId,
     });
 
     await this.questionRepository.save(newQuestion);
 
     return newQuestion;
+  }
+
+  //
+  async findByCertification(certificationId: string): Promise<Question[]> {
+    const questions = await this.questionRepository.find({
+      where: { certificationId, isActive: true },
+      order: { createdAt: 'DESC' },
+    });
+
+    return questions.filter(q => q.isValid());
   }
 
   async findAll(
@@ -94,6 +112,7 @@ export class QuestionsService {
     file: Multer.File,
     quantity: number,
     validity_months: number,
+    certificationId: string,
   ): Promise<{
     created: number;
     questions: Question[];
@@ -119,6 +138,7 @@ export class QuestionsService {
         answer: q.answer,
         validity_months,
         isActive: true,
+        certificationId,
       })
     );
 

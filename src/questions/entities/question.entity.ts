@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Certification } from "src/certifications/entities/certification.entity";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class Question {
@@ -22,6 +23,13 @@ export class Question {
 
     @Column({ nullable: false , default: true})
     isActive: boolean;
+
+    @Column()
+    certificationId: string;
+
+    @ManyToOne(() => Certification, (certification) => certification.questions)
+    @JoinColumn({ name: "certificationId" })
+    certification: Certification;
 
     isValid(): boolean {
         if (!this.isActive) {

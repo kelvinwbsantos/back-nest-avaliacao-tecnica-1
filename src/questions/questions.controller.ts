@@ -85,6 +85,10 @@ export class QuestionsController {
           type: 'number',
           default: 12,
           description: 'Meses de validade das questões'
+        },
+        certificationId: {
+          type: 'string',
+          description: 'UUID da certificação associada às questões'
         }
       }
     }
@@ -119,6 +123,7 @@ export class QuestionsController {
       file,
       dto.quantity || 10,
       dto.validity_months || 12,
+      dto.certificationId
     );
   }
 }

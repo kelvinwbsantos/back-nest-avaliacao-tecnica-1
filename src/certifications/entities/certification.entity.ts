@@ -1,4 +1,5 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Question } from "src/questions/entities/question.entity";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class Certification {
@@ -25,6 +26,9 @@ export class Certification {
 
     @Column({ nullable: false , default: true})
     isActive: boolean;
+
+    @OneToMany(() => Question, question => question.certification)
+    questions: Question[];
 
     @CreateDateColumn()
     createdAt: Date;

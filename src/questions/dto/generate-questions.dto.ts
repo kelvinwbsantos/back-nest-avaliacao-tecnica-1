@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, Min, Max } from 'class-validator';
+import { IsNumber, IsOptional, Min, Max, IsString } from 'class-validator';
 
 export class GenerateQuestionsDto {
   @ApiProperty({ 
@@ -25,4 +25,8 @@ export class GenerateQuestionsDto {
   @Min(1)
   @IsOptional()
   validity_months?: number = 12;
+
+  @ApiProperty({ example: "UUID da certificação relacionada" })
+  @IsString()
+  certificationId: string;
 }

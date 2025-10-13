@@ -13,4 +13,8 @@ export class CreateQuestionDto {
     @ApiProperty({ example: 12 })
     @IsInt()
     validity_months: number;
+
+    @ApiProperty({ example: "UUID da certificação relacionada" })
+    @IsString()
+    certificationId: string;
 }
