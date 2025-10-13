@@ -1,10 +1,11 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Enrollment } from './entities/enrollment.entity';
 import { Repository } from 'typeorm';
 import { CertificationsService } from 'src/certifications/certifications.service';
+import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class EnrollmentsService {
@@ -40,5 +41,14 @@ export class EnrollmentsService {
       where: { userId },
       relations: ['certification']
     });
+  }
+
+  async unenroll(userId: string, enrollmentId: string): Promise<void> {
+    const enrollment = await this.enrollmentRepository.findOneBy({ id: enrollmentId, userId });
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found or does not belong to the user');
+    }
+
+    await this.enrollmentRepository.remove(enrollment);
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ParseUUIDPipe } from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
@@ -36,6 +36,19 @@ export class EnrollmentsController {
   ) {
     const userId = req.user.userId;
     return this.enrollmentsService.findAllByUser(userId);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Unenroll the authenticated user from a certification' })
+  @ApiResponse({ status: 200, description: 'The enrollment has been successfully removed.' })
+  @ApiResponse({ status: 404, description: 'Not Found. Enrollment not found or does not belong to the user.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized. Missing or invalid JWT token.' })
+  async unenroll(
+    @Req() req,
+    @Param('id', ParseUUIDPipe) id: string
+  ) {
+    const userId = req.user.userId;
+    return this.enrollmentsService.unenroll(userId, id);
   }
 
 }
