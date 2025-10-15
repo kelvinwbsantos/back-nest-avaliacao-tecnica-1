@@ -1,11 +1,9 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Enrollment } from './entities/enrollment.entity';
 import { Repository } from 'typeorm';
 import { CertificationsService } from 'src/certifications/certifications.service';
-import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class EnrollmentsService {

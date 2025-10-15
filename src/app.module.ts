@@ -15,6 +15,7 @@ import { SeedModule } from './seeds/seed.module';
 import { QuestionsModule } from './questions/questions.module';
 import { CertificationsModule } from './certifications/certifications.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
+import { ExamsModule } from './exams/exams.module';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { EnrollmentsModule } from './enrollments/enrollments.module';
     SeedModule,
     QuestionsModule,
     CertificationsModule,
-    EnrollmentsModule
+    EnrollmentsModule,
+    ExamsModule
   ],
   controllers: [AppController],
   providers: [AppService, MailerService],

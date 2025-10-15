@@ -12,5 +12,6 @@ import { Certification } from 'src/certifications/entities/certification.entity'
   ],
   controllers: [QuestionsController],
   providers: [QuestionsService, GeminiService],
+  exports: [QuestionsService]
 })
 export class QuestionsModule {}

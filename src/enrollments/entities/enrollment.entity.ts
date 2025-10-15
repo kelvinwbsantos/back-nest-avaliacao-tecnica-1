@@ -1,10 +1,10 @@
 import { Certification } from "src/certifications/entities/certification.entity";
 import { User } from "src/users/entities/user.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from "typeorm";
 
 export enum EnrollmentStatus {
     ACTIVE = 'active',
-    APROVED = 'approved',
+    APPROVED = 'approved',
     REPROVED = 'reproved'
 }
 

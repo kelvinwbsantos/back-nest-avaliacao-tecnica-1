@@ -50,5 +50,4 @@ export class EnrollmentsController {
     const userId = req.user.userId;
     return this.enrollmentsService.unenroll(userId, id);
   }
-
 }
