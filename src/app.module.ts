@@ -17,6 +17,7 @@ import { CertificationsModule } from './certifications/certifications.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ExamsModule } from './exams/exams.module';
 
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
