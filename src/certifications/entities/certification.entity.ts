@@ -28,6 +28,9 @@ export class Certification {
     @Column({ nullable: false, default: true })
     isActive: boolean;
 
+    @Column({ nullable: true })
+    pdfPath: string;
+
     @OneToMany(() => Question, question => question.certification)
     questions: Question[];
 
