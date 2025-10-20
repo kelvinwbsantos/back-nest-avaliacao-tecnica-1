@@ -1,10 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { CertificationsService } from './certifications.service';
-import { CreateCertificationDto } from './dto/create-certification.dto';
+import { CertificationBodyDto, CreateCertificationDto } from './dto/create-certification.dto';
 import { UpdateCertificationDto } from './dto/update-certification.dto';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Certification } from './entities/certification.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import type { Multer } from 'multer';
 
 @ApiTags('certifications')
 @UseGuards(JwtAuthGuard)
@@ -14,12 +17,41 @@ export class CertificationsController {
   constructor(private readonly certificationsService: CertificationsService) { }
 
   @Post()
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/certifications',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const originalName = file.originalname.replace(/\s+/g, '-');
+          cb(null, uniqueSuffix + '-' + originalName);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype !== 'application/pdf') {
+          return cb(new Error('Only PDF files are allowed!'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB limit
+    })
+  )
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a new certification' })
-  @ApiBody({ type: CreateCertificationDto })
+  @ApiBody({
+  type: CreateCertificationDto,
+})
   @ApiResponse({ status: 201, description: 'Certification created successfully' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
-  create(@Body() createCertificationDto: CreateCertificationDto) {
-    return this.certificationsService.create(createCertificationDto);
+  async create(
+    @UploadedFile() file: Multer.File,
+    @Body() createCertificationDto: CertificationBodyDto,
+  ) {
+    if (!file) {
+      throw new BadRequestException('PDF file is required');
+    }
+    const pdfPath = file.path;
+    return this.certificationsService.create(createCertificationDto, pdfPath);
   }
 
   @Get()
