@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateCertificationDto } from './dto/create-certification.dto';
+import { CertificationBodyDto, CreateCertificationDto } from './dto/create-certification.dto';
 import { UpdateCertificationDto } from './dto/update-certification.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,8 +12,8 @@ export class CertificationsService {
     private readonly certificationRepository: Repository<Certification>,
   ) { }
 
-  async create(createCertificationDto: CreateCertificationDto) {
-    const { name, shortDescription, description, passingScore, modality, durationHours } = createCertificationDto;
+  async create(certificationBody: CertificationBodyDto, pdfPath: string): Promise<Certification> {
+    const { name, shortDescription, description, passingScore, modality, durationHours } = certificationBody;
 
     const newCertification = this.certificationRepository.create({
       name,
@@ -22,6 +22,7 @@ export class CertificationsService {
       passingScore,
       modality,
       durationHours,
+      pdfPath,
     });
 
     await this.certificationRepository.save(newCertification);
