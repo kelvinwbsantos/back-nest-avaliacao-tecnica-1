@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { GeminiService } from './gemini.service';
 import type { Multer } from 'multer';
 import { Certification } from 'src/certifications/entities/certification.entity';
+import * as fs from 'fs/promises';
 
 @Injectable()
 export class QuestionsService {
@@ -119,20 +120,13 @@ export class QuestionsService {
     questions: Question[];
     message: string;
   }> {
-    if (!file) {
-      throw new BadRequestException('Nenhum arquivo PDF foi enviado');
-    }
-
-    if (file.mimetype !== 'application/pdf') {
-      throw new BadRequestException('O arquivo deve ser um PDF');
-    }
+    const pdfBuffer = await this.getPdfBuffer(file, certificationId);
 
     const generatedQuestions = await this.geminiService.generateQuestionsFromPDF(
-      file.buffer,
+      pdfBuffer,
       quantity
     );
 
-    // Salva as questões geradas no banco de dados
     const questions = generatedQuestions.map(q =>
       this.questionRepository.create({
         question: q.question,
@@ -151,5 +145,35 @@ export class QuestionsService {
       questions: savedQuestions,
       message: `${savedQuestions.length} questões geradas com sucesso!`
     };
+  }
+
+  private async getPdfBuffer(file: Multer.File, certificationId: string): Promise<Buffer> {
+    if (file) {
+      if (file.mimetype !== 'application/pdf') {
+        throw new BadRequestException('O arquivo enviado deve ser um PDF.');
+      }
+      return file.buffer;
+    }
+
+    if (!certificationId) {
+      throw new BadRequestException('Nenhum arquivo PDF foi enviado e nenhum ID de certificação foi fornecido.');
+    }
+
+    const certification = await this.certificationRepository.findOne({
+      where: { id: certificationId },
+    });
+
+    if (!certification || !certification.pdfPath) {
+      throw new NotFoundException(`Nenhum PDF armazenado encontrado para a certificação com ID: ${certificationId}`);
+    }
+
+    const filePath = certification.pdfPath;
+
+    try {
+      const pdfBuffer = await fs.readFile(filePath);
+      return pdfBuffer;
+    } catch (error) {
+      throw new NotFoundException(`Erro ao ler o arquivo PDF armazenado para a certificação com ID: ${certificationId}`);
+    }
   }
 }
