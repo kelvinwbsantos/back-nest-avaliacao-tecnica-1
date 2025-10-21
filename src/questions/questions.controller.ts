@@ -69,7 +69,6 @@ export class QuestionsController {
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['file'],
       properties: {
         file: {
           type: 'string',
