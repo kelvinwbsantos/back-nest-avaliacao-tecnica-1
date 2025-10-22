@@ -7,6 +7,7 @@ import { ExamAnswer } from './entities/exam-answer.entity';
 import { EnrollmentsModule } from 'src/enrollments/enrollments.module';
 import { QuestionsModule } from 'src/questions/questions.module';
 import { CertificationsModule } from 'src/certifications/certifications.module';
+import { CertificatesModule } from 'src/certificates/certificates.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CertificationsModule } from 'src/certifications/certifications.module';
     EnrollmentsModule,
     QuestionsModule,
     CertificationsModule,
+    CertificatesModule
   ],
   controllers: [ExamsController],
   providers: [ExamsService],

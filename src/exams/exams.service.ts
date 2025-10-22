@@ -10,6 +10,8 @@ import { QuestionsService } from 'src/questions/questions.service';
 import { CertificationsService } from 'src/certifications/certifications.service';
 import { ExamResultDto } from './dto/exam-response.dto';
 import { EnrollmentStatus } from 'src/enrollments/entities/enrollment.entity';
+import { CertificatesService } from 'src/certificates/certificates.service';
+import { CreateCertificateDto } from 'src/certificates/dto/create-certificate.dto';
 
 @Injectable()
 export class ExamsService {
@@ -21,6 +23,7 @@ export class ExamsService {
     private readonly enrollmentsService: EnrollmentsService,
     private readonly questionsService: QuestionsService,
     private readonly certificationsService: CertificationsService,
+    private readonly certificateService: CertificatesService,
   ) { }
 
   async create(userId: string, createExamDto: CreateExamDto): Promise<Exam> {
@@ -189,6 +192,16 @@ export class ExamsService {
     if (enrollment) {
       enrollment.status = passed ? EnrollmentStatus.APPROVED : EnrollmentStatus.REPROVED;
       await this.enrollmentsService['enrollmentRepository'].save(enrollment);
+    }
+
+    if (exam.passed) {
+      const createCertificateDto: CreateCertificateDto = {
+        userId: userId,
+        certificationId: exam.certificationId,
+      };
+
+      await this.certificateService.create(createCertificateDto);
+      console.log("Certificado gerado com sucesso");
     }
 
     return {
