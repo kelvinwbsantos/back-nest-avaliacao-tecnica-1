@@ -1,16 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { UpdateCertificateDto } from './dto/update-certificate.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Certificate } from './entities/certificate.entity';
 import { Repository } from 'typeorm';
-import { NotFoundError } from 'rxjs';
+import { PdfGeneratorService } from './pdf-generator.service';
 
 @Injectable()
 export class CertificatesService {
   constructor(
     @InjectRepository(Certificate)
     private readonly certificateRepository: Repository<Certificate>,
+    private readonly pdfGeneratorService: PdfGeneratorService
   ) { }
 
   async create(createCertificateDto: CreateCertificateDto): Promise<Certificate> {
@@ -26,24 +27,31 @@ export class CertificatesService {
     return newCertificate
   }
 
-  /* GERAR ARQUIVO PDF DO CERTIFICADO
-  async generate(certificationId: string): Promise<Buffer> {
+  async generate(certificationId: string, userId: string): Promise<Buffer> {
     const certificate = await this.verify(certificationId);
+
+    if (certificate.userId != userId) {
+      throw new ForbiddenException('Esta certificação não pertence a você.');
+    }
 
     const pdfData = {
       title: 'Certificado de Conclusão',
       name: certificate.user.name,
       certificationName: certificate.certification.name,
       issueDate: new Date(certificate.createdAt).toLocaleDateString('pt-BR'),
+      certificateId: certificate.id,
     };
-    
-    // const pdfBuffer: Buffer = await this.pdfGeneratorService.generate(pdfData);
+
+    const pdfBuffer: Buffer = await this.pdfGeneratorService.generate(pdfData);
 
     return pdfBuffer;
-  } */
+  }
 
   async verify(certificateId: string): Promise<Certificate> {
-    const certificate = await this.certificateRepository.findOneBy({ id: certificateId });
+    const certificate = await this.certificateRepository.findOne({
+      where: { id: certificateId },
+      relations: ['user', 'certification'],
+    });
 
     if (!certificate) {
       throw new NotFoundException("Não existe certificado com essa identificação");
