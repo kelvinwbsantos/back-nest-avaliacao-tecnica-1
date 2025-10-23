@@ -35,7 +35,7 @@ export class CreateCertificationDto extends CertificationBodyDto {
         type: 'string',
         format: 'binary',
         description: 'Arquivo PDF contendo o conteúdo da certificação, a geração de questões será baseada neste arquivo.',
-        required: true,
+        required: false,
     })
     file: any;
 }

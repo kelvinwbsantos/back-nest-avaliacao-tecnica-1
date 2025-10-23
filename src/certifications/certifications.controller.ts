@@ -39,19 +39,51 @@ export class CertificationsController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create a new certification' })
   @ApiBody({
-  type: CreateCertificationDto,
-})
+    type: CreateCertificationDto,
+  })
   @ApiResponse({ status: 201, description: 'Certification created successfully' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async create(
-    @UploadedFile() file: Multer.File,
     @Body() createCertificationDto: CertificationBodyDto,
+    @UploadedFile() file?: Multer.File,
   ) {
-    if (!file) {
-      throw new BadRequestException('PDF file is required');
-    }
-    const pdfPath = file.path;
+    const pdfPath = file ? file.path : undefined;
     return this.certificationsService.create(createCertificationDto, pdfPath);
+  }
+
+  @Patch(':id')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/certifications',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const originalName = file.originalname.replace(/\s+/g, '-');
+          cb(null, uniqueSuffix + '-' + originalName);
+        },
+      }),
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype !== 'application/pdf') {
+          return cb(new Error('Only PDF files are allowed!'), false);
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB limit
+    })
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Update a certification' })
+  @ApiBody({ type: UpdateCertificationDto })
+  @ApiResponse({ status: 200, description: 'Certification updated successfully' })
+  @ApiResponse({ status: 404, description: 'Certification not found' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateCertificationDto: UpdateCertificationDto,
+    @UploadedFile() file?: Multer.File,
+  ) {
+    const pdfPath = file ? file.path : undefined;
+
+    return this.certificationsService.update(id, updateCertificationDto, pdfPath);
   }
 
   @Get()
@@ -75,15 +107,6 @@ export class CertificationsController {
   @ApiResponse({ status: 404, description: 'Certification not found.' })
   findOne(@Param('id') id: string) {
     return this.certificationsService.findOne(id);
-  }
-
-  @Patch(':id')
-  @ApiOperation({ summary: 'Update a certification' })
-  @ApiBody({ type: UpdateCertificationDto })
-  @ApiResponse({ status: 200, description: 'Certification updated successfully' })
-  @ApiResponse({ status: 404, description: 'Certification not found' })
-  update(@Param('id') id: string, @Body() updateCertificationDto: UpdateCertificationDto) {
-    return this.certificationsService.update(id, updateCertificationDto);
   }
 
   @Delete(':id')

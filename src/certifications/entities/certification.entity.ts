@@ -25,7 +25,7 @@ export class Certification {
     @Column({ nullable: false, default: 2 })
     durationHours: number;
 
-    @Column({ nullable: false, default: true })
+    @Column({ nullable: false, default: false })
     isActive: boolean;
 
     @Column({ nullable: true })
