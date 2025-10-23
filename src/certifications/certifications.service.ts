@@ -4,6 +4,8 @@ import { UpdateCertificationDto } from './dto/update-certification.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Certification } from './entities/certification.entity';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 
 @Injectable()
 export class CertificationsService {
@@ -12,7 +14,7 @@ export class CertificationsService {
     private readonly certificationRepository: Repository<Certification>,
   ) { }
 
-  async create(certificationBody: CertificationBodyDto, pdfPath: string): Promise<Certification> {
+  async create(certificationBody: CertificationBodyDto, pdfPath?: string): Promise<Certification> {
     const { name, shortDescription, description, passingScore, modality, durationHours } = certificationBody;
 
     const newCertification = this.certificationRepository.create({
@@ -69,10 +71,27 @@ export class CertificationsService {
     return certification;
   }
 
-  async update(id: string, updateCertificationDto: UpdateCertificationDto): Promise<Certification> {
+  async update(
+    id: string,
+    updateCertificationDto: UpdateCertificationDto,
+    pdfPath?: string,
+  ): Promise<Certification> {
     const certification = await this.findOne(id);
 
+    if (pdfPath && certification.pdfPath) {
+      try {
+        const oldFilePath = join(process.cwd(), certification.pdfPath);
+        await fs.unlink(oldFilePath);
+      } catch (error) {
+        console.warn(`Falha em deletar arquivo antigo ${certification.pdfPath}:`, error);
+      }
+    }
+
     Object.assign(certification, updateCertificationDto);
+
+    if (pdfPath) {
+      certification.pdfPath = pdfPath;
+    }
 
     return await this.certificationRepository.save(certification);
   }
@@ -83,3 +102,4 @@ export class CertificationsService {
     return await this.certificationRepository.save(certification);
   }
 }
+

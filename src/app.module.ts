@@ -16,6 +16,7 @@ import { QuestionsModule } from './questions/questions.module';
 import { CertificationsModule } from './certifications/certifications.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ExamsModule } from './exams/exams.module';
+import { CertificatesModule } from './certificates/certificates.module';
 
 
 @Module({
@@ -46,7 +47,8 @@ import { ExamsModule } from './exams/exams.module';
     QuestionsModule,
     CertificationsModule,
     EnrollmentsModule,
-    ExamsModule
+    ExamsModule,
+    CertificatesModule
   ],
   controllers: [AppController],
   providers: [AppService, MailerService],
