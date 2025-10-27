@@ -53,6 +53,7 @@ export class QuestionsService {
     page: number = 1,
     limit: number = 10,
     onlyValid: boolean = false,
+    certificationId?: string,
   ) {
     const skip = (page - 1) * limit;
 
@@ -64,6 +65,10 @@ export class QuestionsService {
 
     if (onlyValid) {
       queryBuilder.andWhere('question.isActive = :isActive', { isActive: true });
+    }
+
+    if (certificationId) {
+      queryBuilder.andWhere('question.certificationId = :certificationId', { certificationId });
     }
 
     const [questions, total] = await queryBuilder.getManyAndCount();

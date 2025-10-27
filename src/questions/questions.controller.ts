@@ -22,17 +22,19 @@ export class QuestionsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all questions' })
+  @ApiOperation({ summary: 'Get all questions or filter by certification' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Limite por página' })
   @ApiQuery({ name: 'onlyValid', required: false, type: Boolean, description: 'Retornar apenas questões válidas' })
+  @ApiQuery({ name: 'certificationId', required: false, type: String, description: 'UUID da certificação para filtrar questões' })
   @ApiResponse({ status: 200, description: 'Lista de questões retornada com sucesso' })
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('onlyValid') onlyValid: boolean = false,
+    @Query('certificationId') certificationId?: string,
   ) {
-    return this.questionsService.findAll(Number(page), Number(limit), onlyValid);
+    return this.questionsService.findAll(Number(page), Number(limit), onlyValid, certificationId);
   }
 
   @Patch(':id')

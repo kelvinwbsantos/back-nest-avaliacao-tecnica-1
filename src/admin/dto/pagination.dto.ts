@@ -7,19 +7,21 @@ export class PaginationDto {
     description: 'Número da página',
     required: false,
     default: 1,
+    type: String, 
   })
   @IsOptional()
   @IsNumberString()
-  page?: number;
+  page?: string; 
 
   @ApiProperty({
     description: 'Quantidade de itens por página',
     required: false,
     default: 10,
+    type: String, 
   })
   @IsOptional()
   @IsNumberString()
-  limit?: number;
+  limit?: string; 
 
   @ApiProperty({
     description: 'Pesquisar por email',
