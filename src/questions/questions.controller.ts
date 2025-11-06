@@ -22,17 +22,39 @@ export class QuestionsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all questions' })
+  @ApiOperation({ summary: 'Get all questions or filter by certification' })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Limite por página' })
   @ApiQuery({ name: 'onlyValid', required: false, type: Boolean, description: 'Retornar apenas questões válidas' })
+  @ApiQuery({ name: 'certificationId', required: false, type: String, description: 'UUID da certificação para filtrar questões' })
   @ApiResponse({ status: 200, description: 'Lista de questões retornada com sucesso' })
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('onlyValid') onlyValid: boolean = false,
+    @Query('certificationId') certificationId?: string,
   ) {
-    return this.questionsService.findAll(Number(page), Number(limit), onlyValid);
+    return this.questionsService.findAll(Number(page), Number(limit), onlyValid, certificationId);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a question by id' })
+  @ApiResponse({ status: 200, description: 'Question returned succesfuly' })
+  @ApiResponse({ status: 404, description: 'Question not found' })
+  getById(
+    @Param('id') id: string,
+  ) {
+    return this.questionsService.getById(id);
+  }
+
+  @Get('getAllByCertification/:certificationId')
+  @ApiOperation({ summary: 'Get all questions linked to a certification' })
+  @ApiResponse({ status: 200, description: 'All questions returned succesfuly' })
+  @ApiResponse({ status: 404, description: 'Certification does not exist or there is no questions linked' })
+  getAllByCertification(
+    @Param('certificationId') id: string,
+  ) {
+    return this.questionsService.getAllByCertification(id);
   }
 
   @Patch(':id')
@@ -50,6 +72,14 @@ export class QuestionsController {
   @ApiResponse({ status: 404, description: 'Question not found' })
   remove(@Param('id') id: string) {
     return this.questionsService.softRemove(id);
+  }
+
+  @Delete('delete/:id')
+  @ApiOperation({ summary: 'Delete a question' })
+  @ApiResponse({ status: 200, description: 'Question deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Question not found' })
+  delete(@Param('id') id: string) {
+    return this.questionsService.delete(id);
   }
 
   @Post('generate-from-pdf')

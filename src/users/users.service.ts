@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { UserFilterDto } from 'src/admin/dto/userfilter.dto';
 import * as XLSX from 'xlsx';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -148,5 +149,33 @@ export class UsersService {
         const fileName = `Relatorio_Usuarios_${new Date().toISOString().split('T')[0]}.xlsx`;
 
         return { buffer, fileName };
+    }
+
+    async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.usersRepository.findOne({
+        where: { id },
+        relations: ['role'],
+    });
+
+    if (!user) {
+        throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+    }
+
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
+        const emailExists = await this.usersRepository.findOne({
+        where: { email: updateUserDto.email },
+        });
+        if (emailExists) {
+        throw new BadRequestException('Email já está em uso por outro usuário');
+        }
+    }
+
+    if (updateUserDto.password) {
+        updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    const updatedUser = this.usersRepository.merge(user, updateUserDto);
+
+    return this.usersRepository.save(updatedUser);
     }
 }

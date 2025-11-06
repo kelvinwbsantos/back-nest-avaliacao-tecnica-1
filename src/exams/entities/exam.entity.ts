@@ -2,6 +2,7 @@ import { User } from "src/users/entities/user.entity";
 import { Enrollment } from "src/enrollments/entities/enrollment.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { ExamAnswer } from "./exam-answer.entity";
+import { Certification } from "src/certifications/entities/certification.entity";
 
 export enum ExamStatus {
     IN_PROGRESS = 'in_progress',
@@ -19,7 +20,7 @@ export class Exam {
     @Column()
     enrollmentId: string;
 
-    @Column()
+    @Column({ nullable: true })
     certificationId: string;
 
     @Column({
@@ -54,6 +55,10 @@ export class Exam {
     @ManyToOne(() => Enrollment)
     @JoinColumn({ name: 'enrollmentId' })
     enrollment: Enrollment;
+
+    @ManyToOne(() => Certification)
+    @JoinColumn({ name: 'certificationId' })
+    certification: Certification;
 
     @OneToMany(() => ExamAnswer, answer => answer.exam, { cascade: true })
     answers: ExamAnswer[];

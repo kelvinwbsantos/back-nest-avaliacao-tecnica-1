@@ -8,7 +8,7 @@ export class RegisterDto {
     example: 'a12b3c4d5f6g7h8i9j0k',
   })
   @IsString()
-  token!: string;
+  token: string;
 
   @ApiProperty({
     description: 'CPF do usuário, que pode ser enviado com ou sem máscara.',
@@ -122,3 +122,31 @@ export class LoginDto {
   })
   password!: string;
 }
+
+export class MinimalRegisterDto {
+    @ApiProperty({
+    description: 'CPF do usuário, que pode ser enviado com ou sem máscara.',
+    example: '123.456.678-90',
+  })
+  @Transform(({ value }) => value.replace(/\D/g, ''))
+  @Matches(/^\d{11}$/, { message: 'CPF deve conter exatamente 11 dígitos numéricos.' })
+  cpf!: string;
+
+  @ApiProperty({
+    description: 'Senha do usuário. Deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais.',
+    example: 'Senha@1234',
+  })
+  @IsString()
+  @MinLength(8, { message: 'A senha deve ter no mínimo 8 caracteres.' })
+  @Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/, {
+    message: 'A senha deve conter ao menos uma letra minúscula, uma maiúscula, um número e um caractere especial.',
+  })
+  password!: string;
+
+  @ApiProperty({
+    description: 'Endereço de e-mail do usuário',
+    example: 'johndoe@example.com',
+  })
+  @IsEmail({}, { message: 'Formato de e-mail inválido.' })
+  email!: string;
+  }

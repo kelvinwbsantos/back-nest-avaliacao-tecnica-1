@@ -13,8 +13,8 @@ export class Certificate {
     @Column()
     certificationId: string;
 
-    @Column({ nullable: false, default: true })
-    active: boolean;
+    @Column({ nullable: true })
+    expiresAt: Date;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -26,19 +26,4 @@ export class Certificate {
     @OneToOne(() => Certification)
     @JoinColumn({ name: "certificationId"})
     certification: Certification;
-
-    isValid(): boolean {
-        const VALIDADE_CERTIFICACAO = 6;
-        const now = new Date();
-        const expirationDate = new Date(this.createdAt);
-        expirationDate.setMonth(expirationDate.getMonth() + VALIDADE_CERTIFICACAO)
-
-        const isValid = now <= expirationDate && this.active;
-
-        if (!isValid) {
-            this.active = false;
-        }
-
-        return isValid;
-    }
 }

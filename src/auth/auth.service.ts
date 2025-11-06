@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { InvitesService } from 'src/invites/invites.service';
 import { CreateUserDto } from 'src/users/dto/user.dto';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +29,16 @@ export class AuthService {
 
     this.invitesService.completeInvite(token);
     
+    return user.cpf;
+  }
+
+  async registerWithoutInvitation(registerDto: MinimalRegisterDto): Promise<String> {
+    const createUserDto: CreateUserDto = {
+      ...registerDto,
+      name: '',
+    }
+
+    const user = await this.usersService.create(createUserDto);
     return user.cpf;
   }
 

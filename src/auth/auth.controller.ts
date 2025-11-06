@@ -12,7 +12,7 @@ import {
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { LoginDto, MinimalRegisterDto, RegisterDto } from './dto/auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -27,6 +27,16 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Token de convite inválido ou expirado' })
   async register(@Body() registerDto: RegisterDto) {
     const cpf = await this.authService.register(registerDto);
+    return { message: 'Usuário registrado com sucesso', cpf};
+  }
+
+  @Post('registerWithoutInvitation')
+  @ApiOperation({ summary: 'Registrar um novo usuário convidado' })
+  @ApiBody({ type: MinimalRegisterDto })
+  @ApiResponse({ status: 201, description: 'Usuário registrado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Usuário com este CPF já existe' })
+  async registerWithoutInvitation(@Body() minimalRegisterDto: MinimalRegisterDto) {
+    const cpf = await this.authService.registerWithoutInvitation(minimalRegisterDto);
     return { message: 'Usuário registrado com sucesso', cpf};
   }
 

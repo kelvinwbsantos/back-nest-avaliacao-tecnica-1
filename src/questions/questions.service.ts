@@ -49,10 +49,20 @@ export class QuestionsService {
     return questions.filter(q => q.isValid());
   }
 
+  async getAllByCertification(certificationId: string): Promise<Question[]> {
+    const questions = await this.questionRepository.find({
+      where: { certificationId },
+      order: { createdAt: 'DESC' },
+    });
+
+    return questions;
+  }
+
   async findAll(
     page: number = 1,
     limit: number = 10,
     onlyValid: boolean = false,
+    certificationId?: string,
   ) {
     const skip = (page - 1) * limit;
 
@@ -64,6 +74,10 @@ export class QuestionsService {
 
     if (onlyValid) {
       queryBuilder.andWhere('question.isActive = :isActive', { isActive: true });
+    }
+
+    if (certificationId) {
+      queryBuilder.andWhere('question.certificationId = :certificationId', { certificationId });
     }
 
     const [questions, total] = await queryBuilder.getManyAndCount();
@@ -108,6 +122,11 @@ export class QuestionsService {
     const question = await this.findOne(id);
     question.isActive = false;
     return await this.questionRepository.save(question);
+  }
+
+  async delete(id: string): Promise<Question> {
+    const question = await this.findOne(id);
+    return await this.questionRepository.remove(question);
   }
 
   async generateFromPDF(
@@ -175,5 +194,15 @@ export class QuestionsService {
     } catch (error) {
       throw new NotFoundException(`Erro ao ler o arquivo PDF armazenado para a certificação com ID: ${certificationId}`);
     }
+  }
+
+  async getById(id: string): Promise<Question> {
+    const question = await this.questionRepository.findOne({
+      where: { id },
+    });
+    if (!question) {
+      throw new NotFoundException(`Question with ID ${id} not found`);
+    }
+    return question;
   }
 }
