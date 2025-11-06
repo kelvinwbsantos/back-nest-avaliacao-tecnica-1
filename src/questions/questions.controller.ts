@@ -37,6 +37,26 @@ export class QuestionsController {
     return this.questionsService.findAll(Number(page), Number(limit), onlyValid, certificationId);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a question by id' })
+  @ApiResponse({ status: 200, description: 'Question returned succesfuly' })
+  @ApiResponse({ status: 404, description: 'Question not found' })
+  getById(
+    @Param('id') id: string,
+  ) {
+    return this.questionsService.getById(id);
+  }
+
+  @Get('getAllByCertification/:certificationId')
+  @ApiOperation({ summary: 'Get all questions linked to a certification' })
+  @ApiResponse({ status: 200, description: 'All questions returned succesfuly' })
+  @ApiResponse({ status: 404, description: 'Certification does not exist or there is no questions linked' })
+  getAllByCertification(
+    @Param('certificationId') id: string,
+  ) {
+    return this.questionsService.getAllByCertification(id);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a question' })
   @ApiBody({ type: UpdateQuestionDto })
@@ -52,6 +72,14 @@ export class QuestionsController {
   @ApiResponse({ status: 404, description: 'Question not found' })
   remove(@Param('id') id: string) {
     return this.questionsService.softRemove(id);
+  }
+
+  @Delete('delete/:id')
+  @ApiOperation({ summary: 'Delete a question' })
+  @ApiResponse({ status: 200, description: 'Question deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Question not found' })
+  delete(@Param('id') id: string) {
+    return this.questionsService.delete(id);
   }
 
   @Post('generate-from-pdf')
