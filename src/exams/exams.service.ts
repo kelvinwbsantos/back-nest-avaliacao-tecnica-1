@@ -44,6 +44,7 @@ export class ExamsService {
       where: {
         userId,
         enrollmentId,
+        certificationId: enrollment.certificationId,
         status: ExamStatus.IN_PROGRESS
       }
     });
@@ -66,9 +67,9 @@ export class ExamsService {
   async findOne(examId: string, userId: string): Promise<Exam> {
     const exam = await this.examRepository.findOne({
       where: { id: examId, userId },
-      relations: ['answers', 'answers.question'],
+      relations: ['answers', 'answers.question', 'certification.name'],
     });
-
+    
     if (!exam) {
       throw new NotFoundException('Exam not found or does not belong to the user');
     }
@@ -77,11 +78,15 @@ export class ExamsService {
   }
 
   async findAllByUser(userId: string): Promise<Exam[]> {
-    return await this.examRepository.find({
-      where: { userId },
-      relations: ['enrollment', 'enrollment.certification'],
-      order: { createdAt: 'DESC' },
-    });
+    const queryBuilder = this.examRepository
+      .createQueryBuilder('exam')
+      .where('exam.userId = :userId', { userId })
+      .leftJoin('exam.certification', 'certification')
+      .addSelect('certification.name');
+
+      const [exams, total] = await queryBuilder.getManyAndCount();
+
+      return exams;
   }
 
   async getExamQuestions(examId: string, userId: string) {

@@ -19,7 +19,8 @@ export class CertificatesService {
 
     const newCertificate = this.certificateRepository.create({
       userId,
-      certificationId
+      certificationId,
+      expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // Expira em 1 ano
     })
 
     await this.certificateRepository.save(newCertificate);
@@ -57,6 +58,10 @@ export class CertificatesService {
       throw new NotFoundException("Não existe certificado com essa identificação");
     }
 
+    if (certificate.expiresAt < new Date()) {
+      throw new ForbiddenException("Este certificado está expirado");
+    }
+
     return certificate;
   }
 
@@ -78,6 +83,10 @@ export class CertificatesService {
     if (active != undefined) {
       queryBuilder.andWhere('certificate.active = :active', { active });
     }
+
+    queryBuilder
+      .leftJoin('certificate.certification', 'certification')
+      .addSelect('certification.name');
 
     const [certificates, total] = await queryBuilder.getManyAndCount();
 

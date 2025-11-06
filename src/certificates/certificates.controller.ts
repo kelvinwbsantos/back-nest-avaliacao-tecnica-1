@@ -16,6 +16,7 @@ export class CertificatesController {
   @ApiOperation({ summary: 'Verifica validade de um certificado' })
   @ApiResponse({ status: 200, description: 'Certificado válido.', type: Certificate })
   @ApiResponse({ status: 404, description: 'Certificado não encontrado.' })
+  @ApiResponse({ status: 403, description: 'Certificado expirado.' })
   verify(@Param('certificateId') certificateId: string) {
     return this.certificatesService.verify(certificateId);
   }
