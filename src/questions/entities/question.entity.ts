@@ -6,7 +6,7 @@ export class Question {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
-    @Column({ type: "text", nullable: false })
+    @Column({ type: "text", nullable: true })
     question: string;
 
     @Column({ nullable: false })
