@@ -86,7 +86,6 @@ export class CertificatesService {
 
     queryBuilder
       .leftJoin('certificate.certification', 'certification')
-      .addSelect('certification.name');
 
     const [certificates, total] = await queryBuilder.getManyAndCount();
 
