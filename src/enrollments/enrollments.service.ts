@@ -22,8 +22,8 @@ export class EnrollmentsService {
       where: { userId, certificationId }
     });
 
-    if (existingEnrollment) {
-      throw new ConflictException('User is already enrolled in this certification');
+    if (existingEnrollment && existingEnrollment.status == 'active') {
+      throw new ConflictException('Usuário tem uma inscrição ativa para esta certificação');
     }
 
     const newEnrollment = this.enrollmentRepository.create({
