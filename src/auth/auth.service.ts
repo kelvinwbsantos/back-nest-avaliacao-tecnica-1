@@ -35,7 +35,6 @@ export class AuthService {
   async registerWithoutInvitation(registerDto: MinimalRegisterDto): Promise<String> {
     const createUserDto: CreateUserDto = {
       ...registerDto,
-      name: '',
     }
 
     const user = await this.usersService.create(createUserDto);
