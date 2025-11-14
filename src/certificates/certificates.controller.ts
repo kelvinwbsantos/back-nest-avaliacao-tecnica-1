@@ -102,4 +102,20 @@ export class CertificatesController {
       throw new BadRequestException(`Erro na Blockchain: ${error.message}`);
     }
   }
+
+  @Get('validate-blockchain/:nftId')
+  @ApiOperation({ summary: 'Valida a autenticidade de um NFT na blockchain Sui' })
+  @ApiResponse({ status: 200, description: 'Retorna o status e os dados do NFT.' })
+  @ApiResponse({ status: 400, description: 'NFT inválido, não encontrado ou falsificado.' })
+  async validateOnBlockchain(
+    @Param('nftId') nftId: string,
+  ) {
+    const validationResult = await this.suiService.validateNft(nftId);
+
+    if (!validationResult.isValid) {
+      throw new BadRequestException(validationResult.message);
+    }
+
+    return validationResult;
+  }
 }

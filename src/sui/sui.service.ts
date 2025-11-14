@@ -33,7 +33,7 @@ export class SuiService {
 
       const adminAddress = this.adminKeypair.toSuiAddress();
       this.logger.log(`✅ Carteira Admin carregada: ${adminAddress}`);
-      
+
     } catch (error) {
       this.logger.error('Erro ao carregar carteira Sui. Verifique o .env', error);
     }
@@ -59,13 +59,13 @@ export class SuiService {
     tx.moveCall({
       target: target,
       arguments: [
-        tx.pure.string(params.studentName),    
-        tx.pure.string(params.courseName),     
+        tx.pure.string(params.studentName),
+        tx.pure.string(params.courseName),
         tx.pure.string(params.issueDate),
         tx.pure.string(params.expiresAt),
         tx.pure.string(params.certificateId),
         tx.pure.string(params.imageUrl),
-        tx.pure.address(params.studentAddress), 
+        tx.pure.address(params.studentAddress),
       ],
     });
 
@@ -105,6 +105,60 @@ export class SuiService {
     } catch (error) {
       this.logger.error(`Falha ao mintar certificado na Sui: ${error.message}`);
       throw new Error('Falha na Blockchain: ' + error.message);
+    }
+  }
+
+  async validateNft(nftId: string) {
+    this.logger.log(`Validando NFT na blockchain: ${nftId}`);
+
+    try {
+      const objectResponse = await this.suiClient.getObject({
+        id: nftId,
+        options: {
+          showContent: true,
+        },
+      });
+
+      if (objectResponse.error || !objectResponse.data) {
+        throw new Error('Objeto NFT não encontrado na blockchain.');
+      }
+
+      const content = objectResponse.data.content;
+      if (!content) {
+        throw new Error('Não foi possível ler o conteúdo do objeto.');
+      }
+
+      if (content.dataType !== 'moveObject') {
+        throw new Error('Este objeto não é um NFT (Move Object) válido.');
+      }
+
+      const nftType = content.type;
+      const expectedType = `${this.packageId}::certificate::Certificate`;
+
+      if (nftType !== expectedType) {
+        this.logger.warn(`FALHA NA VALIDAÇÃO: Package ID não confere.
+          Esperado: ${expectedType}
+          Recebido: ${nftType}`);
+
+        throw new Error('Falsificação detectada. O emissor (Package ID) deste NFT não é o oficial.');
+      }
+
+      this.logger.log(`NFT validado com sucesso. Proprietário: ${objectResponse.data.owner}`);
+
+      return {
+        isValid: true,
+        message: 'Certificado autêntico, verificado na blockchain.',
+        data: content.fields,
+        explorerLink: `https://suiscan.xyz/testnet/object/${nftId}`,
+      };
+
+    } catch (error) {
+      this.logger.error(`Erro na validação: ${error.message}`);
+      return {
+        isValid: false,
+        message: error.message,
+        data: null,
+      };
     }
   }
 }
