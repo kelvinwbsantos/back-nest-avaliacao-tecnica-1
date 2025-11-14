@@ -1,16 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards, Res, BadRequestException } from '@nestjs/common';
 import { CertificatesService } from './certificates.service';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Certificate } from './entities/certificate.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Response } from 'express';
+import { SuiService } from 'src/sui/sui.service';
+import { IssueCertificateDto } from './dto/issue-certificate.dto';
 
 @ApiTags('Certificates')
 @ApiBearerAuth()
 @Controller('certificates')
 export class CertificatesController {
-  constructor(private readonly certificatesService: CertificatesService) { }
+  constructor(
+    private readonly certificatesService: CertificatesService,
+    private readonly suiService: SuiService,
+  ) { }
 
   @Get('verify')
   @ApiOperation({ summary: 'Verifica validade de um certificado' })
@@ -59,4 +63,43 @@ export class CertificatesController {
 
     return res.send(pdfBuffer);
   }
+
+@Post('issue')
+@ApiOperation({ summary: 'Emite o certificado na blockchain Sui' })
+@ApiResponse({ status: 201, description: 'Certificado emitido com sucesso na blockchain.' })
+async issueCertificate(@Body() data: IssueCertificateDto) {
+    
+    // 1. Busca os dados no banco (Resolve o await aqui pra ficar limpo)
+    const certificado = await this.certificatesService.verify(data.certificateId);
+
+    if (!certificado) {
+        throw new BadRequestException('Certificado não encontrado.');
+    }
+    
+    // Validação extra (opcional): Verificar se o usuário já tem carteira salva ou usar a que veio no body
+    const carteiraDestino = data.walletAddress; 
+
+    // 2. Chama a blockchain
+    try {
+        const blockchainResult = await this.suiService.mintCertificate({
+            studentName: certificado.user.name, 
+            courseName: certificado.certification.name,
+            // Formatando data para DD/MM/AAAA (Mais comum em certificados BR)
+            issueDate: new Date(certificado.createdAt).toLocaleDateString('pt-BR'), 
+            certificateId: certificado.id,
+            studentAddress: carteiraDestino
+        });
+
+        // (Opcional) Salvar o ID da transação no banco para auditoria
+        // await this.certificatesService.saveTxHash(certificado.id, blockchainResult.txHash);
+
+        return {
+            message: "Certificado emitido e registrado na blockchain!",
+            blockchain: blockchainResult
+        };
+
+    } catch (error) {
+        throw new BadRequestException(`Erro na Blockchain: ${error.message}`);
+    }
+}
 }

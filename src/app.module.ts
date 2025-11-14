@@ -17,6 +17,7 @@ import { CertificationsModule } from './certifications/certifications.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ExamsModule } from './exams/exams.module';
 import { CertificatesModule } from './certificates/certificates.module';
+import { SuiService } from './sui/sui.service';
 
 @Module({
   imports: [
@@ -47,9 +48,9 @@ import { CertificatesModule } from './certificates/certificates.module';
     CertificationsModule,
     EnrollmentsModule,
     ExamsModule,
-    CertificatesModule
+    CertificatesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailerService],
+  providers: [AppService, MailerService, SuiService],
 })
 export class AppModule {}
