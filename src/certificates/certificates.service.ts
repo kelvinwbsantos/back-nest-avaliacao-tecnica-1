@@ -99,4 +99,19 @@ export class CertificatesService {
       },
     };
   }
+
+  async saveBlockchainInfo(certificateId: string, txHash: string, minted: boolean, nftId: string | undefined): Promise<void> {
+    await this.certificateRepository.update(certificateId, {
+      blockchainTxHash: txHash,
+      blockchain_minted: minted,
+      blockchain_nft_id: nftId,
+    });
+  }
+
+  async snapshotCertificateData(certificateId: string, studentName: string, certificationName: string): Promise<void> {
+    await this.certificateRepository.update(certificateId, {
+      snapshot_student_name: studentName,
+      snapshot_certification_name: certificationName,
+    });
+  }
 }

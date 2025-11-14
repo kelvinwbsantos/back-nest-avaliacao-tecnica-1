@@ -10,14 +10,29 @@ export class Certificate {
     @Column()
     userId: string;
 
+    @Column({ nullable: true })
+    snapshot_student_name: string;
+
     @Column()
     certificationId: string;
+
+    @Column({ nullable: true })
+    snapshot_certification_name: string;
 
     @Column({ nullable: true })
     expiresAt: Date;
 
     @CreateDateColumn()
     createdAt: Date;
+
+    @Column({ nullable: true })
+    blockchainTxHash: string;
+
+    @Column({ nullable: true })
+    blockchain_nft_id: string;
+
+    @Column({ nullable: true, default: false })
+    blockchain_minted: boolean;
 
     @ManyToOne(() => User)
     @JoinColumn({ name: "userId"})

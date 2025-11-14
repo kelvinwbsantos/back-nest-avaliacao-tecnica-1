@@ -64,42 +64,42 @@ export class CertificatesController {
     return res.send(pdfBuffer);
   }
 
-@Post('issue')
-@ApiOperation({ summary: 'Emite o certificado na blockchain Sui' })
-@ApiResponse({ status: 201, description: 'Certificado emitido com sucesso na blockchain.' })
-async issueCertificate(@Body() data: IssueCertificateDto) {
-    
-    // 1. Busca os dados no banco (Resolve o await aqui pra ficar limpo)
+  @Post('issue')
+  @ApiOperation({ summary: 'Emite o certificado na blockchain Sui' })
+  @ApiResponse({ status: 201, description: 'Certificado emitido com sucesso na blockchain.' })
+  async issueCertificate(@Body() data: IssueCertificateDto) {
+
     const certificado = await this.certificatesService.verify(data.certificateId);
+    const imagem = `https://placehold.co/800x600/101820/Gold/png?text=CERTIFICADO%0A${encodeURIComponent(certificado.snapshot_student_name)}`;
 
     if (!certificado) {
-        throw new BadRequestException('Certificado não encontrado.');
+      throw new BadRequestException('Certificado não encontrado.');
     }
-    
-    // Validação extra (opcional): Verificar se o usuário já tem carteira salva ou usar a que veio no body
-    const carteiraDestino = data.walletAddress; 
 
-    // 2. Chama a blockchain
+    const carteiraDestino = data.walletAddress;
+
+    await this.certificatesService.snapshotCertificateData(data.certificateId, certificado.user.name, certificado.certification.name);
+
     try {
-        const blockchainResult = await this.suiService.mintCertificate({
-            studentName: certificado.user.name, 
-            courseName: certificado.certification.name,
-            // Formatando data para DD/MM/AAAA (Mais comum em certificados BR)
-            issueDate: new Date(certificado.createdAt).toLocaleDateString('pt-BR'), 
-            certificateId: certificado.id,
-            studentAddress: carteiraDestino
-        });
+      const blockchainResult = await this.suiService.mintCertificate({
+        studentName: certificado.user.name,
+        courseName: certificado.certification.name,
+        issueDate: new Date(certificado.createdAt).toLocaleDateString('pt-BR'),
+        expiresAt: new Date(certificado.expiresAt).toLocaleDateString('pt-BR'),
+        certificateId: certificado.id,
+        imageUrl: imagem,
+        studentAddress: carteiraDestino
+      });
 
-        // (Opcional) Salvar o ID da transação no banco para auditoria
-        // await this.certificatesService.saveTxHash(certificado.id, blockchainResult.txHash);
+      await this.certificatesService.saveBlockchainInfo(data.certificateId, blockchainResult.txHash, blockchainResult.success, blockchainResult.nftId);
 
-        return {
-            message: "Certificado emitido e registrado na blockchain!",
-            blockchain: blockchainResult
-        };
+      return {
+        message: "Certificado emitido e registrado na blockchain!",
+        blockchain: blockchainResult
+      };
 
     } catch (error) {
-        throw new BadRequestException(`Erro na Blockchain: ${error.message}`);
+      throw new BadRequestException(`Erro na Blockchain: ${error.message}`);
     }
-}
+  }
 }

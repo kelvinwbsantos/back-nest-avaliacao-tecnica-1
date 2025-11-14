@@ -17,17 +17,11 @@ export class SuiService {
       url: process.env.SUI_NETWORK_URL || getFullnodeUrl('testnet'),
     });
 
-    // --- CORREÇÃO AQUI ---
-    // Verificamos se a variavel existe antes de atribuir.
-    // Se não existir, lançamos erro para avisar você logo que o servidor subir.
     const pkgId = process.env.SUI_PACKAGE_ID;
-    
     if (!pkgId) {
       throw new Error('CRÍTICO: SUI_PACKAGE_ID não encontrado no arquivo .env');
     }
-    
-    this.packageId = pkgId; // Agora o TypeScript sabe que 'pkgId' é definitivamente uma string
-    // ---------------------
+    this.packageId = pkgId;
 
     // 2. Prepara a Carteira do Admin
     try {
@@ -37,13 +31,11 @@ export class SuiService {
       const { secretKey } = decodeSuiPrivateKey(privateKey);
       this.adminKeypair = Secp256k1Keypair.fromSecretKey(secretKey);
 
-      // ADICIONE ESTA LINHA:
-  const adminAddress = this.adminKeypair.toSuiAddress();
-  this.logger.log(`✅ Carteira Admin carregada: ${adminAddress}`);
+      const adminAddress = this.adminKeypair.toSuiAddress();
+      this.logger.log(`✅ Carteira Admin carregada: ${adminAddress}`);
       
     } catch (error) {
       this.logger.error('Erro ao carregar carteira Sui. Verifique o .env', error);
-      // Opcional: Se sem carteira o app não deve rodar, dê um throw error aqui também
     }
   }
 
@@ -51,7 +43,9 @@ export class SuiService {
     studentName: string;
     courseName: string;
     issueDate: string;
+    expiresAt: string;
     certificateId: string;
+    imageUrl: string;
     studentAddress: string;
   }) {
     this.logger.log(`Iniciando mint para: ${params.studentName}`);
@@ -67,11 +61,16 @@ export class SuiService {
       arguments: [
         tx.pure.string(params.studentName),    
         tx.pure.string(params.courseName),     
-        tx.pure.string(params.issueDate),      
-        tx.pure.string(params.certificateId),  
+        tx.pure.string(params.issueDate),
+        tx.pure.string(params.expiresAt),
+        tx.pure.string(params.certificateId),
+        tx.pure.string(params.imageUrl),
         tx.pure.address(params.studentAddress), 
       ],
     });
+
+    // Dica: Se tiver erro de gás, descomente a linha abaixo:
+    // tx.setGasBudget(10000000); 
 
     try {
       // 5. Assina e Envia
@@ -100,6 +99,7 @@ export class SuiService {
         txHash: result.digest,
         nftId: nftId,
         explorerLink: `https://suiscan.xyz/testnet/tx/${result.digest}`,
+        imageUrl: params.imageUrl // Retornamos a URL para confirmação visual
       };
 
     } catch (error) {
