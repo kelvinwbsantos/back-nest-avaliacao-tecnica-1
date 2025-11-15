@@ -100,11 +100,12 @@ export class CertificatesService {
     };
   }
 
-  async saveBlockchainInfo(certificateId: string, txHash: string, minted: boolean, nftId: string | undefined): Promise<void> {
+  async saveBlockchainInfo(certificateId: string, txHash: string, minted: boolean, nftId: string | undefined, dataHash: string): Promise<void> {
     await this.certificateRepository.update(certificateId, {
       blockchainTxHash: txHash,
       blockchain_minted: minted,
       blockchain_nft_id: nftId,
+      data_hash: dataHash
     });
   }
 

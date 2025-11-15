@@ -6,6 +6,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Response } from 'express';
 import { SuiService } from 'src/sui/sui.service';
 import { IssueCertificateDto } from './dto/issue-certificate.dto';
+import * as crypto from 'crypto';
 
 @ApiTags('Certificates')
 @ApiBearerAuth()
@@ -65,37 +66,53 @@ export class CertificatesController {
   }
 
   @Post('issue')
-  @ApiOperation({ summary: 'Emite o certificado na blockchain Sui' })
-  @ApiResponse({ status: 201, description: 'Certificado emitido com sucesso na blockchain.' })
+  @ApiOperation({ summary: 'Emite o selo (NFT) do certificado na blockchain' })
+  @ApiResponse({ status: 201, description: 'Selo emitido com sucesso.' })
   async issueCertificate(@Body() data: IssueCertificateDto) {
 
     const certificado = await this.certificatesService.verify(data.certificateId);
-    const imagem = `https://placehold.co/800x600/101820/Gold/png?text=CERTIFICADO%0A${encodeURIComponent(certificado.snapshot_student_name)}`;
-
     if (!certificado) {
       throw new BadRequestException('Certificado não encontrado.');
     }
 
-    const carteiraDestino = data.walletAddress;
+    await this.certificatesService.snapshotCertificateData(
+      data.certificateId,
+      certificado.user.name,
+      certificado.certification.name
+    );
 
-    await this.certificatesService.snapshotCertificateData(data.certificateId, certificado.user.name, certificado.certification.name);
+    const privateData = {
+      snapshot_student_name: certificado.user.name,
+      snapshot_certification_name: certificado.certification.name,
+      issueDateISO: new Date(certificado.createdAt).toISOString(),
+      expiresAtISO: new Date(certificado.expiresAt).toISOString(),
+      certificateId: certificado.id
+    };
+
+    const dataString = JSON.stringify(privateData);
+    const dataHash = crypto.createHash('sha256').update(dataString).digest('hex');
+
+    const imagemGenerica = `https://placehold.co/1080/101820/Gold/png?font=Poppins&text=CERTIFICADO%20DE%20CONCLUS%C3%83O%0A${encodeURIComponent(certificado.certification.name)}`;
 
     try {
       const blockchainResult = await this.suiService.mintCertificate({
-        studentName: certificado.user.name,
-        courseName: certificado.certification.name,
-        issueDate: new Date(certificado.createdAt).toLocaleDateString('pt-BR'),
-        expiresAt: new Date(certificado.expiresAt).toLocaleDateString('pt-BR'),
-        certificateId: certificado.id,
-        imageUrl: imagem,
-        studentAddress: carteiraDestino
+        dataHash: dataHash,
+        imageUrl: imagemGenerica,
+        studentAddress: data.walletAddress
       });
 
-      await this.certificatesService.saveBlockchainInfo(data.certificateId, blockchainResult.txHash, blockchainResult.success, blockchainResult.nftId);
+      await this.certificatesService.saveBlockchainInfo(
+        data.certificateId,
+        blockchainResult.txHash,
+        blockchainResult.success,
+        blockchainResult.nftId,
+        dataHash
+      );
 
       return {
-        message: "Certificado emitido e registrado na blockchain!",
-        blockchain: blockchainResult
+        message: "Selo de autenticidade (NFT) emitido!",
+        blockchain: blockchainResult,
+        privateData: privateData
       };
 
     } catch (error) {

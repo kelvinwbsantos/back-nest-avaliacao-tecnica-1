@@ -26,6 +26,9 @@ export class Certificate {
     createdAt: Date;
 
     @Column({ nullable: true })
+    data_hash: string;
+
+    @Column({ nullable: true })
     blockchainTxHash: string;
 
     @Column({ nullable: true })

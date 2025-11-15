@@ -40,30 +40,20 @@ export class SuiService {
   }
 
   async mintCertificate(params: {
-    studentName: string;
-    courseName: string;
-    issueDate: string;
-    expiresAt: string;
-    certificateId: string;
+    dataHash: string;
     imageUrl: string;
     studentAddress: string;
   }) {
-    this.logger.log(`Iniciando mint para: ${params.studentName}`);
+    this.logger.log(`Iniciando mint do selo. Hash: ${params.dataHash}`);
 
     const tx = new Transaction();
-
-    // 3. Define o alvo
     const target = `${this.packageId}::certificate::mint_certificate`;
 
     // 4. Prepara os argumentos
     tx.moveCall({
       target: target,
       arguments: [
-        tx.pure.string(params.studentName),
-        tx.pure.string(params.courseName),
-        tx.pure.string(params.issueDate),
-        tx.pure.string(params.expiresAt),
-        tx.pure.string(params.certificateId),
+        tx.pure.string(params.dataHash), // <--- SÓ O HASH
         tx.pure.string(params.imageUrl),
         tx.pure.address(params.studentAddress),
       ],
