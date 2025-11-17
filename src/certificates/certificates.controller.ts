@@ -1,16 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards, Res, BadRequestException } from '@nestjs/common';
 import { CertificatesService } from './certificates.service';
-import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Certificate } from './entities/certificate.entity';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Response } from 'express';
+import { SuiService } from 'src/sui/sui.service';
+import { IssueCertificateDto } from './dto/issue-certificate.dto';
+import * as crypto from 'crypto';
 
 @ApiTags('Certificates')
 @ApiBearerAuth()
 @Controller('certificates')
 export class CertificatesController {
-  constructor(private readonly certificatesService: CertificatesService) { }
+  constructor(
+    private readonly certificatesService: CertificatesService,
+    private readonly suiService: SuiService,
+  ) { }
 
   @Get('verify')
   @ApiOperation({ summary: 'Verifica validade de um certificado' })
@@ -58,5 +63,76 @@ export class CertificatesController {
     res.setHeader('Content-Type', 'application/pdf');
 
     return res.send(pdfBuffer);
+  }
+
+  @Post('issue')
+  @ApiOperation({ summary: 'Emite o selo (NFT) do certificado na blockchain' })
+  @ApiResponse({ status: 201, description: 'Selo emitido com sucesso.' })
+  async issueCertificate(@Body() data: IssueCertificateDto) {
+
+    const certificado = await this.certificatesService.verify(data.certificateId);
+    if (!certificado) {
+      throw new BadRequestException('Certificado não encontrado.');
+    }
+
+    await this.certificatesService.snapshotCertificateData(
+      data.certificateId,
+      certificado.user.name,
+      certificado.certification.name
+    );
+
+    const privateData = {
+      snapshot_student_name: certificado.user.name,
+      snapshot_certification_name: certificado.certification.name,
+      issueDateISO: new Date(certificado.createdAt).toISOString(),
+      expiresAtISO: new Date(certificado.expiresAt).toISOString(),
+      certificateId: certificado.id
+    };
+
+    const dataString = JSON.stringify(privateData);
+    const dataHash = crypto.createHash('sha256').update(dataString).digest('hex');
+
+    const imagemGenerica = `https://placehold.co/1080/101820/Gold/png?font=Poppins&text=CERTIFICADO%20DE%20CONCLUS%C3%83O%0A${encodeURIComponent(certificado.certification.name)}`;
+
+    try {
+      const blockchainResult = await this.suiService.mintCertificate({
+        dataHash: dataHash,
+        imageUrl: imagemGenerica,
+        studentAddress: data.walletAddress
+      });
+
+      await this.certificatesService.saveBlockchainInfo(
+        data.certificateId,
+        blockchainResult.txHash,
+        blockchainResult.success,
+        blockchainResult.nftId,
+        dataHash
+      );
+
+      return {
+        message: "Selo de autenticidade (NFT) emitido!",
+        blockchain: blockchainResult,
+        privateData: privateData
+      };
+
+    } catch (error) {
+      throw new BadRequestException(`Erro na Blockchain: ${error.message}`);
+    }
+  }
+
+  @Get('validate-blockchain/:nftId')
+  @ApiOperation({ summary: 'Valida a autenticidade de um NFT na blockchain Sui' })
+  @ApiResponse({ status: 200, description: 'Retorna o status e os dados do NFT.' })
+  @ApiResponse({ status: 400, description: 'NFT inválido, não encontrado ou falsificado.' })
+  async validateOnBlockchain(
+    @Param('nftId') nftId: string,
+  ) {
+    const validationResult = await this.suiService.validateNft(nftId);
+
+    if (!validationResult.isValid) {
+      throw new BadRequestException(validationResult.message);
+    }
+
+    return validationResult;
   }
 }

@@ -64,18 +64,22 @@ export class ExamsService {
     return await this.examRepository.save(exam);
   }
 
-  async findOne(examId: string, userId: string): Promise<Exam> {
-    const exam = await this.examRepository.findOne({
-      where: { id: examId, userId },
-      relations: ['answers', 'answers.question', 'certification.name'],
-    });
+async findOne(examId: string, userId: string): Promise<Exam> {
+    const exam = await this.examRepository
+      .createQueryBuilder('exam')
+      .leftJoinAndSelect('exam.answers', 'answers')
+      .leftJoinAndSelect('answers.question', 'question')
+      .leftJoinAndSelect('exam.certification', 'certification')
+      .where('exam.id = :examId', { examId })
+      .andWhere('exam.userId = :userId', { userId })
+      .getOne();
     
     if (!exam) {
       throw new NotFoundException('Exam not found or does not belong to the user');
     }
 
     return exam;
-  }
+}
 
   async findAllByUser(userId: string): Promise<Exam[]> {
     const queryBuilder = this.examRepository

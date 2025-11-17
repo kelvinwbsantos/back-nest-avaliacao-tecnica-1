@@ -149,4 +149,11 @@ export class MinimalRegisterDto {
   })
   @IsEmail({}, { message: 'Formato de e-mail inválido.' })
   email!: string;
+
+  @ApiProperty({
+    description: 'Nome completo do usuário.',
+    example: 'John Doe',
+  })
+  @IsString()
+  name!: string;
   }

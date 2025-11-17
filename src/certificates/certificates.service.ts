@@ -86,7 +86,7 @@ export class CertificatesService {
 
     queryBuilder
       .leftJoin('certificate.certification', 'certification')
-      .addSelect('certification.name');
+      .addSelect(['certification.name']);
 
     const [certificates, total] = await queryBuilder.getManyAndCount();
 
@@ -98,5 +98,21 @@ export class CertificatesService {
         last_page: Math.ceil(total / limit),
       },
     };
+  }
+
+  async saveBlockchainInfo(certificateId: string, txHash: string, minted: boolean, nftId: string | undefined, dataHash: string): Promise<void> {
+    await this.certificateRepository.update(certificateId, {
+      blockchainTxHash: txHash,
+      blockchain_minted: minted,
+      blockchain_nft_id: nftId,
+      data_hash: dataHash
+    });
+  }
+
+  async snapshotCertificateData(certificateId: string, studentName: string, certificationName: string): Promise<void> {
+    await this.certificateRepository.update(certificateId, {
+      snapshot_student_name: studentName,
+      snapshot_certification_name: certificationName,
+    });
   }
 }

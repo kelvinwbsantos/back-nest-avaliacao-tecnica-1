@@ -5,6 +5,7 @@ import { Certificate } from './entities/certificate.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/auth/auth.module';
 import { PdfGeneratorService } from './pdf-generator.service';
+import { SuiService } from 'src/sui/sui.service';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { PdfGeneratorService } from './pdf-generator.service';
     AuthModule
   ],
   controllers: [CertificatesController],
-  providers: [CertificatesService, PdfGeneratorService],
+  providers: [CertificatesService, PdfGeneratorService, SuiService],
   exports: [CertificatesService]
 })
 export class CertificatesModule {}
