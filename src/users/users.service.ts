@@ -8,6 +8,7 @@ import { Role } from 'src/roles/entities/role.entity';
 import { UserFilterDto } from 'src/admin/dto/userfilter.dto';
 import * as XLSX from 'xlsx';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +18,8 @@ export class UsersService {
 
         @InjectRepository(Role)
         private readonly rolesRepository: Repository<Role>,
+
+        private readonly rolesService: RolesService,
     ) { }
 
     /**
@@ -152,30 +155,40 @@ export class UsersService {
     }
 
     async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.usersRepository.findOne({
-        where: { id },
-        relations: ['role'],
-    });
-
-    if (!user) {
-        throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
-    }
-
-    if (updateUserDto.email && updateUserDto.email !== user.email) {
-        const emailExists = await this.usersRepository.findOne({
-        where: { email: updateUserDto.email },
+        const user = await this.usersRepository.findOne({
+            where: { id },
+            relations: ['role'],
         });
-        if (emailExists) {
-        throw new BadRequestException('Email já está em uso por outro usuário');
+
+        if (!user) {
+            throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
         }
-    }
 
-    if (updateUserDto.password) {
-        updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
+        if (updateUserDto.email && updateUserDto.email !== user.email) {
+            const emailExists = await this.usersRepository.findOne({
+                where: { email: updateUserDto.email },
+            });
+            if (emailExists) {
+                throw new BadRequestException('Email já está em uso por outro usuário');
+            }
+        }
 
-    const updatedUser = this.usersRepository.merge(user, updateUserDto);
+        if (updateUserDto.password) {
+            updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+        }
 
-    return this.usersRepository.save(updatedUser);
+        // Handle role separately
+        if (updateUserDto.role) {
+            const role = await this.rolesService.findOneByName(updateUserDto.role);
+            user.role = role;
+        }
+
+        // Create a copy of the DTO without the role property
+        const { role: roleFromDto, ...userUpdateData } = updateUserDto;
+
+        // Now merge only the compatible properties
+        const updatedUser = this.usersRepository.merge(user, userUpdateData);
+
+        return this.usersRepository.save(updatedUser);
     }
 }

@@ -22,6 +22,13 @@ export class Role {
   name: string;
 
   /**
+   * Nome do papel (normalizado e único).
+   * Ex: "administrador", "gente_e_cultura", "colaborador", etc.
+   */
+  @Column({ nullable: true })
+  description: string;
+
+  /**
    * Lista de usuários que pertencem a esta 'role'.
    */
   @OneToMany(() => User, user => user.role)

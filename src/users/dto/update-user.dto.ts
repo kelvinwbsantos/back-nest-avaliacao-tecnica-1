@@ -1,4 +1,4 @@
-// src/users/dto/update-user.dto.ts
+// update-user.dto.ts
 import { IsOptional, IsString, IsEmail, Length, Matches } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -58,4 +58,9 @@ export class UpdateUserDto {
   @IsString()
   @Length(6, 100)
   password?: string;
+
+  @ApiPropertyOptional({ description: 'Nome da role (string)' })
+  @IsOptional()
+  @IsString()
+  role?: string;
 }
