@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { CreateRoleDto } from './dto/role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 
 /**
  * Serviço responsável por gerenciar 'roles' no sistema.
@@ -29,15 +30,175 @@ export class RolesService {
     async create(createRoleDto: CreateRoleDto): Promise<Role> {
         const nameNormalized = createRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_');
 
-        const existinRole = await this.rolesRepository.findOne({
+        const existingRole = await this.rolesRepository.findOne({
             where: { name: nameNormalized },
         });
 
-        if (existinRole) {
+        if (existingRole) {
             throw new BadRequestException(`Role with name ${nameNormalized} already exists`);
         }
 
-        const role = this.rolesRepository.create({ name: nameNormalized, });
+        const role = this.rolesRepository.create({ 
+            name: nameNormalized,
+            description: createRoleDto.description
+        });
         return await this.rolesRepository.save(role);
+    }
+
+    /**
+     * Busca todas as 'roles' com paginação.
+     * 
+     * @param {number} page - Número da página (começa em 1)
+     * @param {number} limit - Número de itens por página
+     * @returns {Promise<{ data: Role[]; total: number; page: number; limit: number; totalPages: number }>}
+     */
+    async findAll(page: number = 1, limit: number = 10): Promise<{
+        data: Role[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }> {
+        const offset = (page - 1) * limit;
+        
+        const [roles, total] = await this.rolesRepository.findAndCount({
+            skip: offset,
+            take: limit,
+            order: { id: 'ASC' },
+        });
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            data: roles,
+            total,
+            page,
+            limit,
+            totalPages,
+        };
+    }
+
+    /**
+     * Busca uma 'role' específica pelo ID.
+     * 
+     * @param {number} id - ID da 'role' a ser buscada
+     * @returns {Promise<Role>} A 'role' encontrada
+     * @throws {NotFoundException} Se a 'role' não for encontrada
+     */
+    async findOne(id: number): Promise<Role> {
+        const role = await this.rolesRepository.findOne({
+            where: { id },
+        });
+
+        if (!role) {
+            throw new NotFoundException(`Role with ID ${id} not found`);
+        }
+
+        return role;
+    }
+
+    /**
+     * Busca uma 'role' específica pelo nome.
+     * 
+     * @param {string} name - Nome da 'role' a ser buscada
+     * @returns {Promise<Role>} A 'role' encontrada
+     * @throws {NotFoundException} Se a 'role' não for encontrada
+     */
+    async findOneByName(name: string): Promise<Role> {
+        const nameNormalized = name.trim().toLowerCase().replace(/\s+/g, '_');
+        
+        const role = await this.rolesRepository.findOne({
+            where: { name: nameNormalized },
+        });
+
+        if (!role) {
+            throw new NotFoundException(`Role with name ${nameNormalized} not found`);
+        }
+
+        return role;
+    }
+
+    /**
+     * Atualiza uma 'role' específica pelo ID.
+     * 
+     * @param {number} id - ID da 'role' a ser atualizada
+     * @param {UpdateRoleDto} updateRoleDto - Dados para atualização
+     * @returns {Promise<Role>} A 'role' atualizada
+     * @throws {NotFoundException} Se a 'role' não for encontrada
+     * @throws {BadRequestException} Se o novo nome já estiver em uso por outra 'role'
+     */
+    async update(id: number, updateRoleDto: UpdateRoleDto): Promise<Role> {
+        const existingRole = await this.findOne(id);
+
+        // Verificar se o novo nome já existe (excluindo a role atual)
+        if (updateRoleDto.name) {
+            const nameNormalized = updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_');
+            
+            const existingRoleWithNewName = await this.rolesRepository.findOne({
+                where: { name: nameNormalized } as FindOptionsWhere<Role>,
+            });
+
+            if (existingRoleWithNewName && existingRoleWithNewName.id !== id) {
+                throw new BadRequestException(`Role with name ${nameNormalized} already exists`);
+            }
+
+            existingRole.name = nameNormalized;
+        }
+
+        if (updateRoleDto.description !== undefined) {
+            existingRole.description = updateRoleDto.description;
+        }
+
+        return await this.rolesRepository.save(existingRole);
+    }
+
+    /**
+     * Exclui uma 'role' específica pelo ID.
+     * 
+     * @param {number} id - ID da 'role' a ser excluída
+     * @returns {Promise<void>}
+     * @throws {NotFoundException} Se a 'role' não for encontrada
+     * @throws {BadRequestException} Se houver usuários associados à 'role'
+     */
+    async remove(id: number): Promise<void> {
+        const role = await this.findOne(id);
+
+        // Verificar se há usuários associados a esta role
+        // Isso assume que você tem uma propriedade 'users' na entidade Role
+        if (role.users && role.users.length > 0) {
+            throw new BadRequestException(
+                `Cannot delete role: there are ${role.users.length} user(s) associated with this role`
+            );
+        }
+
+        await this.rolesRepository.remove(role);
+    }
+
+    /**
+     * Verifica se uma 'role' existe pelo ID.
+     * 
+     * @param {number} id - ID da 'role' a ser verificada
+     * @returns {Promise<boolean>} True se a 'role' existir, false caso contrário
+     */
+    async exists(id: number): Promise<boolean> {
+        const role = await this.rolesRepository.findOne({
+            where: { id },
+        });
+        return !!role;
+    }
+
+    /**
+     * Busca múltiplas 'roles' por IDs.
+     * 
+     * @param {number[]} ids - Array de IDs das 'roles' a serem buscadas
+     * @returns {Promise<Role[]>} Array de 'roles' encontradas
+     */
+    async findByIds(ids: number[]): Promise<Role[]> {
+        if (!ids || ids.length === 0) {
+            return [];
+        }
+        return await this.rolesRepository.findBy({
+            id: ids as any, // TypeORM aceita arrays no where
+        });
     }
 }

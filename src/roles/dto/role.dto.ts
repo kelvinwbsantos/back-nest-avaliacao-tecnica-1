@@ -16,4 +16,14 @@ export class CreateRoleDto {
     })
     @IsString()
     name: string;
+
+    /**
+     * Descrição da role a ser criada.
+     */
+    @ApiProperty({
+        description: 'Descrição da role',
+        example: 'Role de acesso total',
+    })
+    @IsString()
+    description: string;
 }
